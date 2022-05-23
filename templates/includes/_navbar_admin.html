@@ -1,0 +1,51 @@
+<nav class="navbar sticky-top navbar-expand-lg navbar-light bg-light mb-3">
+    <div class="container-lg">
+        <a class="navbar-brand" href="/admin-dashboard">
+            <img src="{{ url_for('static', filename='images/CarOrSell-logo.png') }}" alt="CarOrSell-logo.png" width="52px" height="40px" class="me-1">COSAdmin
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle Navigation Bar">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                <li class="nav-item mx-lg-2">
+                    <a class="nav-link" href="/admin-dashboard">Dashboard</a>
+                </li>
+                <li class="nav-item mx-lg-2">
+                    <a class="nav-link" href="/dashboard">Report</a>
+                </li>
+                <li class="nav-item mx-lg-2">
+                    <a class="nav-link" href="/retrieve_admin">User</a>
+                </li>
+                <li class="nav-item mx-lg-2">
+                    <a class="nav-link" href="#">Inventory</a>
+                </li>
+            </ul>
+            <hr class=".d-none .d-md-block .d-lg-none">
+            <ul class="navbar-nav align-items-lg-center">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="authenticatedUserNavbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa-solid fa-user-tie me-1"></i>My Account
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-lg-end mb-md-2" aria-labelledby="authenticatedUserNavbarDropdown">
+                        <li>
+                            <a class="dropdown-item text-primary" href="/">
+                                <i class="fa-solid fa-globe me-1"></i>Go to Main Website
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/retrieveUsers">
+                                <i class="fa-solid fa-pen-to-square me-1"></i>Edit Account Information
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="/logout">
+                                <i class="fa-solid fa-right-from-bracket me-1"></i>Logout
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

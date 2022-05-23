@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}View My Cart | CarOrSell{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="d-flex justify-content-center row">
+        <div class="col-md-8">
+            <div class="p-2">
+                <h2 class="fw-bold text-center">My Shopping Cart</h2>
+            </div>
+            <div class="d-flex flex-row justify-content-between align-items-center p-2 bg-white mt-4 px-3 rounded">
+                <div class="mr-1">
+                    <img class="rounded" src="https://i.imgur.com/XiFJkhI.jpg" width="70">
+                </div>
+                <div class="d-flex flex-column align-items-center product-details">
+                    <span class="font-weight-bold">Basic T-shirt</span>
+                </div>
+                <div class="d-flex flex-row align-items-center qty">
+                    <i class="fa-solid fa-minus text-danger me-2"></i>
+                    <h5 class="text-grey mt-1 mr-1 ml-1">2</h5>
+                    <i class="fa-solid fa-plus text-success ms-2"></i>
+                </div>
+                <div>
+                    <h5 class="text-grey">S$20.00</h5>
+                </div>
+            </div>
+            <div class="d-flex flex-row align-items-center mt-3 p-2 bg-white rounded">
+                <input type="text" class="form-control border-0 gift-card" placeholder="Enter Discount Voucher (case-sensitive)">
+                <button class="btn btn-outline-warning btn-sm ml-2" type="button">Apply</button>
+            </div>
+            <div class="d-flex flex-row align-items-center mt-3 p-2 bg-white rounded">
+                <button class="btn btn-warning btn-block btn-lg ml-2 pay-button" type="button">Place Order</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

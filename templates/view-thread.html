@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}View Support Thread | CarOrSell{% endblock %}
+
+{% block content %}
+{% from "includes/_formHelper.html" import render_field %}
+<h1 class="fw-bold text-center mb-3">View Support Thread</h1>
+
+<div class="text-left">
+    <div class="mb-3 mx-auto" style="max-width: 750px;">
+        <p class="fw-bold">
+            {{ render_field(form.thread_title, class="form-control", disabled=true) }}
+        </p>
+    </div>
+    <div class="mb-3 mx-auto" style="max-width: 750px;">
+        <p class="fw-bold">
+            {{ render_field(form.thread_username, class="form-control", disabled=true) }}
+        </p>
+    </div>
+    <div class="mb-3 mx-auto" style="max-width: 750px;">
+        <p class="fw-bold">
+            {{ render_field(form.thread_message, class="form-control", disabled=true) }}
+        </p>
+    </div>
+    <hr class="mx-auto" style="max-width: 750px;">
+    <div class="form-group mb-3 mx-auto" style="max-width: 750px;">
+        <p class="fw-bold">
+            {{ render_field(form.thread_reply, class="form-control", disabled=true) }}
+        </p>
+    </div>
+    <div class="mx-auto" style="max-width: 750px;">
+        <a href="/support-forum">
+            <button type="button" class="btn btn-info btn-block">Go Back</button>
+        </a>
+    </div>
+</div>
+{% endblock %}

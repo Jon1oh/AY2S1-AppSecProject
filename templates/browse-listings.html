@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Browse Listings | CarOrSell{% endblock %}
+
+{% block content %}
+<h1 class="fw-bold text-center py-4 px-2">Browse Car Listings</h1>
+<p class="text-center px-2">Feel free to browse through the list of second-hand cars by other members.</p>
+<p class="text-center fst-italic pb-4 px-2">We recommend these cars for new drivers.</p>
+<hr>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-hover">
+        <thead class="bg-info">
+            <tr>
+                <th style="width: 5%">Brand</th>
+                <th style="width: 20%">Model</th>
+                <th style="width: 10%">List Price</th>
+                <th style="width: 10%">Vehicle Condition</th>
+                <th style="width: 30%">Remarks</th>
+                <th style="width: 10%">Select an Option</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sellcar in sellcar_list %}
+                <tr>
+                    <td>{{ sellcar.get_car_brand() }}</td>
+                    <td>{{ sellcar.get_car_model() }}</td>
+                    <td>{{ sellcar.get_car_price() }}</td>
+                    <td>{{ sellcar.get_condition() }}</td>
+                    <td>{{ sellcar.get_remarks() }}</td>
+                    <td>
+                        <a href="/product-page" class="btn btn-secondary w-100 mb-1">View</a>
+                        <br>
+                        <a href="/checkout" class="btn btn-success w-100">Purchase</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

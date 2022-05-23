@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Support Forum | CarOrSell{% endblock %}
+
+{% block content %}
+<h1 class="fw-bold text-center py-4 px-2">Welcome to the Support Forum</h1>
+<p class="text-center px-2">Feel free to browse through the list of support threads created by others.</p>
+<p class="text-center px-2">You may want to look through the list of support threads created by others before deciding to create one.</p>
+<p class="text-center fst-italic pb-4 px-2">A random support thread in the list below may contain the answer you need, thus saving you time!</p>
+<hr>
+{% for announcements in announcements_list %}
+<div class="card mb-3">
+    <div class="card-header bg-info">
+        <h5 class="fw-bold">Announcement: {{ announcements.get_thread_title() }}</h5>
+    </div>
+    <div class="card-body">
+        <p>Dear members,</p>
+        <p>{{ announcements.get_thread_message() }}</p>
+        <p class="m-0">Yours faithfully,</p>
+        <p class="fst-italic fw-bold m-0">{{ announcements.get_thread_username() }}</p>
+        <hr class="my-1">
+        <small class="fst-italic fw-bold">For reference only:</small>
+        <br>
+        <small class="fst-italic">Announcement Type: {{ announcements.get_announcement_type() }}</small>
+        <br>
+        <small class="fst-italic">Severity: {{ announcements.get_severity_level() }}</small>
+        {% if session['logged_in_admin'] %}
+            <hr class="my-1">
+            <small class="fw-bold mb-1">DESTRUCTIVE ACTION:</small>
+            <form action="{{ url_for('delete_announcement', id=announcements.get_announcement_id()) }}" method="POST">
+                <!-- Modal Codes (DELETE) -->
+                <div class="modal fade" id="staticBackdropDeleteAnnouncement_{{ announcements.get_announcement_id() }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="fw-bold" id="staticBackdropLabel">Announcement Deletion Confirmation</h5>
+                            </div>
+                            <div class="modal-body">
+                                <p>Are you sure that you would want to delete this announcement titled "{{ announcements.get_thread_title() }}"?</p>
+                                <small class="text-danger fw-bold">
+                                    <sup>*</sup>This action is irreversible.
+                                </small>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-danger mb-1">Delete Announcement</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Trigger Discard Changes & Go Back Modal -->
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#staticBackdropDeleteAnnouncement_{{ announcements.get_announcement_id() }}">Delete Announcement</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+
+<div class="row">
+    <div class="col-lg-4 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <p class="fw-bold m-0">Create a Thread</p>
+            </div>
+            <div class="card-body">
+                <p>Our staff aims to reply to your queries within 48 hours. We thank you for your patience.</p>
+                <div class="accordion" id="guidelinesAccordion">
+                    <div class="accordion-item mb-3">
+                        <h2 class="accordion-header" id="headingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGuidelines" aria-expanded="false" aria-controls="collapseGuidelines">Posting Guidelines</button>
+                        </h2>
+                        <div id="collapseGuidelines" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#guidelinesAccordion">
+                            <div class="accordion-body">
+                                <ol type="1">
+                                    <li>Thread contents must not contain any form of harassment, bullying, or threats of violence.</li>
+                                    <li>Respect the privacy of others. Instigating harassment, for example, by revealing someone’s personal or confidential information, is not allowed.</li>
+                                    <li>You are not required to use your real name to create a thread, but you are not allowed in any way to impersonate an individual or an entity misleadingly or deceptively.</li>
+                                    <li>Keep thread contents legal, and avoid posting illegal content or soliciting/facilitating unlawful or prohibited transactions.</li>
+                                    <li>Do not attempt to perform any actions that interfere with the operations/use of the forum.</li>
+                                    <li>Thread cannot be modified or deleted once posted to discourage any misuse of our support forum.</li>
+                                </ol>
+                                <small class="fw-bold text-danger">Site administrators of CarOrSell have the legal rights to lodge a report against your actions with real-world authorities should we determine it as a potential threat to people's lives.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% if session['logged_in_admin'] %}
+                <form action="/thread-creation" method="get">
+                    <button type="submit" class="btn btn-info w-100">Create a Thread</button>
+                </form>
+                <form action="/announcement-creation" method="get">
+                    <button type="submit" class="btn btn-success w-100 mt-2">Create an Announcement</button>
+                </form>
+                {% elif session['logged_in'] %}
+                <form action="/thread-creation" method="get">
+                    <button type="submit" class="btn btn-info w-100">Create a Thread</button>
+                </form>
+                {% else %}
+                <p>You need to be logged in to create a support thread.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        {% if count == 0 %}
+        <p>There are currently no threads created.</p>
+        <p class="fst-italic">Why not start one if you really need our assistance?</p>
+        {% elif count == 1 %}
+        <h3 class="fw-bold">Browse Thread</h3>
+        <p>There is 1 thread available for viewing.</p>
+        {% else %}
+        <h3 class="fw-bold">Browse Threads</h3>
+        <p class="mb-0">There are {{ count }} threads available for viewing.</p>
+        <p class="fst-italic">Threads are sorted with the latest at the top, to the earliest at the bottom of the page.</p>
+        {% endif %}
+
+        {% for threads in threads_list %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="fw-bold my-1">{{ threads.get_thread_title() }}</h5>
+                <small class="p-0">Posted by: {{ threads.get_thread_username() }}</small>
+            </div>
+            <div class="card-body py-2">
+                <p class="mb-1 fst-italic">Please selection an option:</p>
+                {% if session['logged_in_admin'] %}
+                <a href="/view-thread/{{ threads.get_thread_id() }}" class="btn btn-info mb-1">View Thread</a>
+                <a href="/update-thread/{{ threads.get_thread_id() }}" class="btn btn-warning mb-1">Update Thread</a>
+                <hr class="my-1">
+                <small class="fw-bold mb-1">DESTRUCTIVE ACTION:</small>
+                <form action="{{ url_for('delete_thread', id=threads.get_thread_id()) }}" method="POST">
+                    <!-- Modal Codes (DELETE) -->
+                    <div class="modal fade" id="staticBackdropDelete_{{ threads.get_thread_id() }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="fw-bold" id="staticBackdropLabel">Thread Deletion Confirmation</h5>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Are you sure that you would want to delete this support thread titled "{{ threads.get_thread_title() }}"?</p>
+                                    <small class="text-danger fw-bold">
+                                        <sup>*</sup>This action is irreversible.
+                                    </small>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-danger mb-1">Delete Thread</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Trigger Discard Changes & Go Back Modal -->
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#staticBackdropDelete_{{ threads.get_thread_id() }}">Delete Thread</button>
+                </form>
+                {% else %}
+                <a href="/view-thread/{{ threads.get_thread_id() }}" class="btn btn-info mb-1">View Thread</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Back to Top Button -->
+        <button type="button" class="btn btn-info btn-floating btn-lg" id="btn-back-to-top">
+            <i class="fa-solid fa-chevron-up"></i>
+            <p class="fw-bold p-0 m-0" style="font-size: 14px">TOP</p>
+        </button>
+    </div>
+</div>
+
+<!-- Script -->
+<script src="{{ url_for('static', filename='scripts/btt.js') }}"></script>
+{% endblock %}

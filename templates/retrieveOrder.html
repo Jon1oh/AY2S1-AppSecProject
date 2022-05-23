@@ -1,0 +1,138 @@
++{% extends "base.html" %}
+{% block title %}Orders in Progress | CarOrSell{% endblock %}
+
+{% block content %}
+{% from "includes/_formHelper.html" import render_field %}
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+  font-family: Arial;
+  font-size: 17px;
+  padding: 8px;
+  color: #bbb
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.row {
+  display: -ms-flexbox; /* IE10 */
+  display: flex;
+  -ms-flex-wrap: wrap; /* IE10 */
+  flex-wrap: wrap;
+  margin: 0 -16px;
+}
+
+.col-25 {
+  -ms-flex: 25%; /* IE10 */
+  flex: 25%;
+}
+
+.col-50 {
+  -ms-flex: 50%; /* IE10 */
+  flex: 50%;
+}
+
+.col-75 {
+  -ms-flex: 75%; /* IE10 */
+  flex: 75%;
+}
+
+.col-25,
+.col-50,
+.col-75 {
+  padding: 0 16px;
+}
+
+.container1 {
+  background-color: #212529;
+  padding: 5px 20px 15px 20px;
+  border: 1px solid darkgrey;
+  border-radius: 3px;
+}
+
+.btn1 {
+  background-color: #0d6efd;
+  color: #fff;
+  padding: 12px;
+  margin: 10px 0;
+  border: none;
+  width: 100%;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 17px;
+}
+
+.btn1:hover {
+  background-color: #1464da;
+}
+
+a {
+  color: #2196F3;
+}
+
+h3 {
+  color: #eee
+}
+
+h4 {
+  color: #eee
+}
+
+h5 {
+  color: #ddd
+}
+</style>
+</head>
+<body>
+<h1 class="display-4">Order History</h1>
+<br>
+<div class="row">
+  <div class="col-75">
+    <div class="container1">
+      <div class="row">
+        <div class="col-50">
+          <h4>
+          {% if count == 0 %}
+          <p>You have no pending deliveries.</p>
+          {% else %}
+          <p>You have {{ count }} pending deliveries.</p>
+          {% endif %}
+          </h4>
+          <br>
+          <div class="row">
+            <div class="col-75">
+              <div class="col-25">
+                <h4>Order History <span class="price"><i class="fa fa-shopping-cart"></i> <b>{{ count }}</b></span></h4>
+                <br>
+                {% for orders in orders_list %}
+                <div class="container1">
+                  <div class="col-50">
+                    <h5><b>A3 Sedan</b> $181,000</h5>
+                    <hr>
+                    <p>Estimated Delivery Date: 22 Feb 2022 / 13:00-17:00</p>
+                    <p>Shipping Address: {{ orders.get_address() }}</p>
+                    <p>Order ID: {{ orders.get_order_id() }}</p>
+                    <form action="{{url_for('delete_order', id=orders.get_order_id())}}" method="POST">
+                      <input type="submit" value="Cancel Order" class="btn btn-danger"></form>
+                  </div>
+                </div>
+                <br>
+                {% endfor %}
+              </div>
+            <p>Orders can only be canceled a maximum of 5 days after the booking was made</p>
+            <a href="/" style="color: #fff">
+            <button class="btn1">Back To Home</button>
+            </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+{% endblock %}

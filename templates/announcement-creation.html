@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Announcement Creation | CarOrSell{% endblock %}
+
+{% block content %}
+{% from "includes/_formHelper.html" import render_field %}
+<h1 class="fw-bold text-center mb-3">Create Announcement</h1>
+
+<form method="POST" action="">
+    <div class="text-left">
+        <div class="mb-3 mx-auto" style="max-width: 750px;">
+            {{ render_field(form.thread_username, class="form-control") }}
+        </div>
+        <div class="mb-3 mx-auto" style="max-width: 750px;">
+            {{ render_field(form.thread_title, class="form-control") }}
+        </div>
+        <div class="mb-3 mx-auto" style="max-width: 750px;">
+            {{ render_field(form.announcement_type, class="form-control") }}
+        </div>
+        <div class="mb-3 mx-auto" style="max-width: 750px;">
+            {{ render_field(form.severity_level, class="form-control") }}
+        </div>
+        <div class="mb-3 mx-auto" style="max-width: 750px;">
+            {{ render_field(form.thread_message, class="form-control") }}
+        </div>
+        <div class="mx-auto" style="max-width: 750px;">
+            <input type="submit" value="Create Announcement" class="btn btn-success w-100">
+        </div>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Create Support Thread | CarOrSell{% endblock %}
+
+{% block content %}
+{% from "includes/_formHelper.html" import render_field %}
+<h1 class="fw-bold text-center mb-3">Create Support Thread</h1>
+
+<form method="POST" action="">
+    <div class="text-left">
+        <div class="mb-3 mx-auto" style="max-width: 750px;">
+            {{ render_field(form.thread_username, class="form-control") }}
+        </div>
+        <div class="mb-3 mx-auto" style="max-width: 750px;">
+            {{ render_field(form.thread_title, class="form-control") }}
+        </div>
+        <div class="mb-3 mx-auto" style="max-width: 750px;">
+            {{ render_field(form.thread_message, class="form-control") }}
+        </div>
+        <div class="mx-auto" style="max-width: 750px;">
+            <input type="submit" value="Create Support Thread" class="btn btn-info w-100 mb-1">
+        </div>
+        <div class="mx-auto" style="max-width: 750px;">
+            <small class="fw-bold text-danger">
+                <sup>*</sup>By proceeding to create a thread, you are deemed to have read and agreed to be legally bound by the guidelines and warning listed on the previous page.
+            </small>
+        </div>
+    </div>
+</form>
+{% endblock %}

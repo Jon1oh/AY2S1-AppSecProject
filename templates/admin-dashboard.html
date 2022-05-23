@@ -1,0 +1,81 @@
+{% extends "base_admin.html" %}
+{% block title %}Admin Dashboard | CarOrSell{% endblock %}
+
+{% block content %}
+<h4 class="text-center fw-bold m-4">Please Select an Option:</h4>
+
+<div class="container mb-3">
+    <div class="row justify-content-center">
+        <div class="col-md-4 col-lg-3 col-xl-3 mb-4">
+            <div class="card text-center" style="height: 100%;">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-4">Manage Inventory</h5>
+                    <i class="fa-solid fa-cubes mb-4" style="font-size: 100px"></i>
+                    <br>
+                    <a href="/retrieveSellCars">
+                        <button type="button" class="btn btn-info btn-block mb-1">Car Listings</button>
+                    </a>
+                    <br>
+                    <a href="/createCar">
+                        <button type="button" class="btn btn-info btn-block mb-1">Create Cars</button>
+                    </a>
+                    <br>
+                    <a href="/adminRetrieveCars">
+                        <button type="button" class="btn btn-info btn-block mb-1">Available Cars</button>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-3 col-xl-3 mb-4">
+            <div class="card text-center" style="height: 100%;">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-4">Manage Users</h5>
+                    <i class="fa-solid fa-users mb-4" style="font-size: 100px"></i>
+                    <br>
+                    <a href="/retrieve_admin">
+                        <button type="button" class="btn btn-info btn-block mb-1">Select</button>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-3 col-xl-3 mb-4">
+            <div class="card text-center" style="height: 100%;">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-4">Sales Statistics</h5>
+                    <i class="fa-solid fa-arrow-trend-up mb-4" style="font-size: 100px"></i>
+                    <br>
+                    <a href="/dashboard">
+                        <button type="button" class="btn btn-info btn-block mb-1">Select</button>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-3 col-xl-3 mb-4">
+            <div class="card text-center" style="height: 100%;">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-4">Support Forum</h5>
+                    <i class="fa-solid fa-handshake-angle mb-4" style="font-size: 100px"></i>
+                    <br>
+                    <a href="/support-forum">
+                        <button type="button" class="btn btn-info btn-block mb-1">Select</button>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-3 col-xl-3 mb-4">
+            <div class="card text-center" style="height: 100%;">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-4">Go to Main Website</h5>
+                    <i class="fa-solid fa-globe mb-4" style="font-size: 100px"></i>
+                    <br>
+                    <a href="/">
+                        <button type="button" class="btn btn-info btn-block mb-1">Select</button>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<p class="text-center fw-bold fst-italic">----- END OF SELECTION -----</p>
+{% endblock %}

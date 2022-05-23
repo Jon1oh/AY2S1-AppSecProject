@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Checkout | CarOrSell{% endblock %}
+
+{% block content %}
+{% from "includes/_formHelper.html" import render_field %}
+<h1 class="fw-bold text-center py-4 px-2">Checkout</h1>
+<hr>
+<div class="row">
+    <div class="col-xl-3">
+        <div class="card">
+            <div class="card-header bg-info">
+                <h5 class="fw-bold mb-0">
+                    <i class="fa-solid fa-cart-shopping me-1"></i>My Cart
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="fw-bold mb-0">Tesla Model S</p>
+                <ul style="list-style: none;">
+                    <li>Price: SGD200,000</li>
+                </ul>
+                <p class="fw-bold mb-0">Shipping</p>
+                <ul style="list-style: none;">
+                    <li>Price: SGD1,000</li>
+                </ul>
+                <hr>
+                <p class="fw-bold mb-0">Total (GST inclusive): SGD201,000</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-9">
+        <div class="card">
+            <div class="card-header bg-info">
+                <h5 class="fw-bold mb-0">
+                    <i class="fa-solid fa-circle-info me-1"></i>Payment Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="">
+                    <div class="text-left">
+                        <h5 class="fw-bold mb-3">Billing Address</h5>
+                        <div class="mb-2 mx-auto">
+                            {{ render_field(form.address, class="form-control") }}
+                        </div>
+                        <div class="mb-2 mx-auto">
+                            {{ render_field(form.postal_code, class="form-control") }}
+                        </div>
+                        <hr>
+                        <h5 class="fw-bold mb-3">Card Details</h5>
+                        <div class="my-3">
+                            <p class="mb-1">We accept the following payment method:</p>
+                            <i class="fa-brands fa-cc-visa" style="color: #1437ce; font-size: 35px;"></i>
+                            <i class="fa-brands fa-cc-mastercard" style="color: #eb001b; font-size: 35px;"></i>
+                            <i class="fa-brands fa-cc-amex" style="color: #0076ce; font-size: 35px;"></i>
+                        </div>
+                        <div class="mb-2 mx-auto">
+                            {{ render_field(form.card_name, class="form-control") }}
+                        </div>
+                        <div class="mb-2 mx-auto">
+                            {{ render_field(form.card_no, class="form-control") }}
+                        </div>
+                        <div class="mb-2" style="max-width: 22.5%;">
+                            {{ render_field(form.expmonth, class="form-control") }}
+                        </div>
+                        <div class="mb-2" style="max-width: 22.5%;">
+                            {{ render_field(form.expyear, class="form-control") }}
+                        </div>
+                        <div class="mb-2" style="max-width: 22.5%;">
+                            {{ render_field(form.cvv, class="form-control") }}
+                        </div>
+                        <div class="mb-2 form-check">
+                            <input type="checkbox" class="form-check-input" id="billingAddressSameAsShipping">
+                            <label class="form-check-label" for="billingAddressSameAsShipping">Billing address same as shipping address</label>
+                        </div>
+                        <div class="mx-auto">
+                            <input type="submit" value="Place Order" class="btn btn-info w-100">
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

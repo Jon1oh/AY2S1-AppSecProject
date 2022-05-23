@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en-SG" style="height: 100%;">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/CarOrSell-logo.png') }}">
+
+        <title>CarOrSell – Buy or Sell Your Cars Here</title>
+
+        <!-- CarOrSell CSS -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}">
+
+        <!-- Bootstrap v5.1.3 CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+        <!-- Font Awesome v6.x -->
+        <script src="https://kit.fontawesome.com/b47353ca11.js" crossorigin="anonymous"></script>
+    </head>
+    <body style="background-image: url('../static/images/home-bg.png'); height: 100%; background-position: center; background-repeat: no-repeat; background-size: cover;">
+        <nav class="navbar sticky-top navbar-expand-lg navbar-light bg-light mb-3">
+            <div class="container-lg">
+                <a class="navbar-brand" href="/">
+                    <img src="{{ url_for('static', filename='images/CarOrSell-logo.png') }}" alt="CarOrSell-logo.png" width="52px" height="40px" class="me-1">CarOrSell
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle Navigation Bar">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarResponsive">
+                    <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                        <li class="nav-item mx-lg-2">
+                            <a class="nav-link" href="/">Home</a>
+                        </li>
+                        <li class="nav-item mx-lg-2">
+                            <a class="nav-link" href="/buy-car">Buy Car</a>
+                        </li>
+                        <li class="nav-item mx-lg-2">
+                            <a class="nav-link" href="/browse-listings">Browse Listings</a>
+                        </li>
+                        <li class="nav-item mx-lg-2">
+                            <a class="nav-link" href="/sell-your-car">Sell Your Car</a>
+                        </li>
+                        <li class="nav-item mx-lg-2">
+                            <a class="nav-link" href="/support-forum">Support Forum</a>
+                        </li>
+                    </ul>
+                    <hr class=".d-none .d-md-block .d-lg-none">
+                    <ul class="navbar-nav align-items-lg-center">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarSearchDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-lg-end mb-md-2" aria-labelledby="navbarSearchDropdown" style="min-width: 300px;">
+                                <li>
+                                    <form action="" method="" class="px-2">
+                                        <input class="form-control" type="search" placeholder="Find Your Dream Car" aria-label="Search">
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                        {% if session['logged_in_admin'] %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="authenticatedUserNavbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-user-tie me-1"></i>My Account
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-lg-end mb-md-2" aria-labelledby="authenticatedUserNavbarDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="/admin-dashboard">
+                                        <i class="fa-solid fa-chart-line me-1"></i>Admin Dashboard
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/retrieveUsers">
+                                        <i class="fa-solid fa-pen-to-square me-1"></i>Edit Account Information
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fa-solid fa-clock-rotate-left me-1"></i>Order History
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="/logout">
+                                        <i class="fa-solid fa-right-from-bracket me-1"></i>Logout
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        {% elif session['logged_in'] %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="authenticatedUserNavbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-user-tie me-1"></i>My Account
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-lg-end mb-md-2" aria-labelledby="authenticatedUserNavbarDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="/retrieveUsers">
+                                        <i class="fa-solid fa-pen-to-square me-1"></i>Edit Account Information
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fa-solid fa-clock-rotate-left me-1"></i>Order History
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="/logout">
+                                        <i class="fa-solid fa-right-from-bracket me-1"></i>Logout
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        {% else %}
+                        <li class="nav-item">
+                            <form action="/login" method="get">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fa-solid fa-user-lock me-1"></i>Login/Register
+                                </button>
+                            </form>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-lg">
+            <div class="d-flex flex-column vh-100 justify-content-center align-items-center">
+                <h2 class="text-white px-auto text-center fw-bold fst-italic">Welcome to CarOrSell!</h2>
+                <p class="text-white px-auto text-center fw-bold mb-0" style="font-size: 60px;">Your Dream Car.</p>
+                <p class="text-white px-auto text-center fw-bold" style="font-size: 60px;">We Find It.</p>
+                {% if session['logged_in_admin'] %}
+                    <a href="#learn-more" class="text-white text-center mt-3" style="text-decoration: none;">
+                        <p class="mb-0" style="font-size: 16px;">Learn More</p>
+                        <i class="fa-solid fa-chevron-down fw-bold"></i>
+                    </a>
+                {% elif session['logged_in'] %}
+                    <a href="#learn-more" class="text-white text-center mt-3" style="text-decoration: none;">
+                        <p class="mb-0" style="font-size: 16px;">Learn More</p>
+                        <i class="fa-solid fa-chevron-down fw-bold"></i>
+                    </a>
+                {% else %}
+                    <a href="/account-creation" class="btn btn-success btn-lg px-4 mb-3" style="font-size: 24px;">Open an Account Today</a>
+                    <a href="#learn-more" class="text-white text-center mt-3" style="text-decoration: none;">
+                        <p class="mb-0" style="font-size: 16px;">Learn More</p>
+                        <i class="fa-solid fa-chevron-down fw-bold"></i>
+                    </a>
+                {% endif %}
+            </div>
+            <div class="pt-3 mb-5" id="learn-more">
+                <div class="mb-5">
+                    <h2 class="fw-bold text-center mb-4">Why Choose Us?</h2>
+                    <div class="row">
+                        <div class="col-md text-center">
+                            <i class="fa-solid fa-user-tie text-info mb-3" style="font-size: 75px;"></i>
+                            <h3 class="fw-bold">Experience</h3>
+                            <p>Every CarOrSell staff member has at least a decade of experience in the automobile industry.</p>
+                        </div>
+                        <div class="col-md text-center">
+                            <i class="fa-solid fa-helmet-safety text-info mb-3" style="font-size: 75px;"></i>
+                            <h3 class="fw-bold">Safety</h3>
+                            <p>All vehicles are checked and tested vigorously to ensure it meets the manufacturer's safety standards.</p>
+                        </div>
+                        <div class="col-md text-center">
+                            <i class="fa-solid fa-clock text-info mb-3" style="font-size: 75px;"></i>
+                            <h3 class="fw-bold">Reliability</h3>
+                            <p>We thoroughly check all second-hand vehicles for wear and tear before listing them on our website.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="py-5 bg-light" style="border-radius: 10px;">
+                    <div class="row justify-content-center">
+                        <div class="text-center">
+                            <div class="fs-4 mb-4 px-3 fst-italic">
+                                <p>"Out of all the car dealerships we have worked with, CarOrSell is the only one that has provided reliable and customer-oriented services. No matter the customer's age, young or old, my best impression of the company is the willingness of their staff in assisting them to find their dream car!"
+                            </div>
+                            <div class="d-flex align-items-center justify-content-center">
+                                <img class="rounded-circle me-3" src="{{ url_for('static', filename='images/elon-musk-portrait.png') }}" alt="elon-musk-portrait.png" width="50px" height="50px">
+                                <div class="fw-bold">Elon Musk<span class="fw-bold text-primary mx-1">/</span>CEO of Tesla Motors</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="pt-3">
+                    <h2 class="fw-bold text-center mb-4">What Our Customers Say</h2>
+                    <div class="row">
+                        <div class="col-lg-4 mb-5">
+                            <div class="card h-100 shadow border-0">
+                                <div class="card-body p-4">
+                                    <div class="text-warning mb-2">
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                    </div>
+                                    <h5 class="card-title mb-3">Friendly Staff</h5>
+                                    <p class="card-text mb-0">Brought my kids to the showroom. To my surprise, the staff here actually taught them the components of the car when they asked about it. Would recommend this dealership any time, any day!</p>
+                                </div>
+                                <div class="card-footer p-4 pt-0 bg-transparent border-top-0">
+                                    <div class="d-flex align-items-end justify-content-between">
+                                        <div class="d-flex align-items-center">
+                                            <div class="small">
+                                                <div class="fw-bold">Alan Tan</div>
+                                                <div class="text-muted">21 November 2021</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 mb-5">
+                            <div class="card h-100 shadow border-0">
+                                <div class="card-body p-4">
+                                    <div class="text-warning mb-2">
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                    </div>
+                                    <h5 class="card-title mb-3">Excellent Customer Service</h5>
+                                    <p class="card-text mb-0">Had a problem with my newly bought Tesla Model S and contacted customer service directly. Though he told me that the company does not provide on-site service, he voluntarily came down to my house to resolve the issue. Best customer service ever!</p>
+                                </div>
+                                <div class="card-footer p-4 pt-0 bg-transparent border-top-0">
+                                    <div class="d-flex align-items-end justify-content-between">
+                                        <div class="d-flex align-items-center">
+                                            <div class="small">
+                                                <div class="fw-bold">John Tan</div>
+                                                <div class="text-muted">29 November 2021</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 mb-5">
+                            <div class="card h-100 shadow border-0">
+                                <div class="card-body p-4">
+                                    <div class="text-warning mb-2">
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                        <i class="fa-solid fa-star"></i>
+                                    </div>
+                                    <h5 class="card-title mb-3">Cheapest Dealership</h5>
+                                    <p class="card-text mb-0">Most car dealerships in Singapore just want to eat our money. Unlike those dealerships, CarOrSell is, if not one of the cheapest out of every car dealership I have gone to. Please help to spread words about this genuine business.</p>
+                                </div>
+                                <div class="card-footer p-4 pt-0 bg-transparent border-top-0">
+                                    <div class="d-flex align-items-end justify-content-between">
+                                        <div class="d-flex align-items-center">
+                                            <div class="small">
+                                                <div class="fw-bold">Steven Lim</div>
+                                                <div class="text-muted">8 December 2021</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="pt-3">
+                    <h2 class="fw-bold text-center mb-4">What Are You Waiting For?</h2>
+                    <div class="text-center">
+                        <a href="/retrieveCars" class="btn btn-info px-4 mb-3">Shop Now</a>
+                        <br>
+                        <p class="mb-2">or</p>
+                        <a href="/sell-car" class="px-4 mb-3" style="text-decoration: none;">Sell Your Car Today</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="container mt-3 py-4">
+                <div class="row mt-3 justify-content-center">
+                    <div class="col-md-3 col-lg-2 col-xl-2 mb-4">
+                        <h6 class="fw-bold mb-4">Useful Links</h6>
+                        <p>
+                            <a href="/#learn-more">About CarOrSell</a>
+                        </p>
+                        <p>
+                            <a href="/#learn-more">Why Choose Us</a>
+                        </p>
+                        <p>
+                            <a href="/order-refund-policy">Order Refund Policy</a>
+                        </p>
+                    </div>
+                    <div class="col-md-3 col-lg-2 col-xl-2 mb-4">
+                        <h6 class="fw-bold mb-4">Need Assistance?</h6>
+                        <p>
+                            <a href="/support-forum">Community Forum</a>
+                        </p>
+                    </div>
+                    <div class="col-md-3 col-lg-2 col-xl-2 mb-4">
+                        <h6 class="fw-bold mb-4">Connect With Us</h6>
+                        <p>
+                            <a href="https://www.facebook.com/" target="_blank">
+                                <i class="fa-brands fa-facebook me-1"></i>Facebook
+                            </a>
+                        </p>
+                        <p>
+                            <a href="https://twitter.com/" target="_blank">
+                                <i class="fa-brands fa-twitter me-1"></i>Twitter
+                            </a>
+                        </p>
+                        <p>
+                            <a href="https://www.youtube.com/" target="_blank">
+                                <i class="fa-brands fa-youtube me-1"></i>YouTube
+                            </a>
+                        </p>
+                    </div>
+                    <div class="col-md-4 col-lg-4 col-xl-3 mb-4">
+                        <h6 class="fw-bold mb-4">Visit Us</h6>
+                        <p>
+                            <i class="fa-solid fa-location-dot me-1"></i>CarOrSell Building
+                            <br>
+                            <span>
+                                180 Ang Mo Kio Avenue 8
+                                <br>
+                                Singapore 569830
+                            </span>
+                        </p>
+                        <p>
+                            <i class="fa-solid fa-clock me-1"></i>Operating Hours
+                            <br>
+                            <span>
+                                - Monday to Friday:
+                                <br>
+                                08:00 to 19:30
+                                <br>
+                                - Saturday:
+                                <br>
+                                08:00 to 12:30
+                                <br>
+                                - Closed on Sundays and PH
+                            </span>
+                        </p>
+                        <p>
+                            <a href="mailto:ask@carorsell.sg">
+                                <i class="fa-solid fa-envelope me-1"></i>ask@carorsell.sg
+                            </a>
+                        </p>
+                        <p>
+                            <a href="tel:+6564515115">
+                                <i class="fa-solid fa-phone me-1"></i>+65 6451 5115
+                            </a>
+                        </p>
+                    </div>
+                </div>
+                <hr>
+                <div class="footer-legal text-center">
+                    <ul class="list-inline">
+                        <li class="list-inline-item m-0 pe-3">
+                            <a href="/terms-of-use">Terms of Use</a>
+                        </li>
+                        <li class="list-inline-item m-0 ps-2 pe-3">
+                            <a href="/privacy-policy">Privacy Policy</a>
+                        </li>
+                        <li class="list-inline-item m-0 ps-2">
+                            <a href="https://us.norton.com/internetsecurity-how-to-cyber-security-best-practices-for-employees.html" target="_blank">Cybersecurity Best Practices</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="pt-1 pb-2">
+                    <p class="text-center m-1">&copy; 2022 CarOrSell</p>
+                </div>
+            </div>
+        </footer>
+        <!-- Bootstrap v5.1.3 Separate -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+    </body>
+</html>

@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Delivery | CarOrSell{% endblock %}
+
+{% block content %}
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+  font-family: Arial;
+  font-size: 17px;
+  padding: 8px;
+  color: #bbb
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.row {
+  display: -ms-flexbox; /* IE10 */
+  display: flex;
+  -ms-flex-wrap: wrap; /* IE10 */
+  flex-wrap: wrap;
+  margin: 0 -16px;
+}
+
+.col-25 {
+  -ms-flex: 25%; /* IE10 */
+  flex: 25%;
+}
+
+.col-50 {
+  -ms-flex: 50%; /* IE10 */
+  flex: 50%;
+}
+
+.col-75 {
+  -ms-flex: 75%; /* IE10 */
+  flex: 75%;
+}
+
+.col-25,
+.col-50,
+.col-75 {
+  padding: 0 16px;
+}
+
+.container1 {
+  background-color: #212529;
+  padding: 5px 20px 15px 20px;
+  border: 1px solid darkgrey;
+  border-radius: 3px;
+}
+
+.btn1 {
+  background-color: #0d6efd;
+  color: #fff;
+  padding: 12px;
+  margin: 10px 0;
+  border: none;
+  width: 100%;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 17px;
+}
+
+.btn1:hover {
+  background-color: #1464da;
+}
+
+.btn2 {
+  background-color: #ddd;
+  color: #000;
+  padding: 12px;
+  margin: 10px 0;
+  border: none;
+  width: 100%;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 17px;
+}
+
+.btn2:hover {
+  background-color: #555;
+  color: #eee;
+}
+
+a {
+  color: #2196F3;
+}
+
+h1 {
+  color: #777
+}
+
+h2 {
+  color: #eee
+}
+
+h3 {
+  color: #eee
+}
+
+h4 {
+  color: #eee
+}
+</style>
+</head>
+<body>
+
+<!-- Delivery Details-->
+<h1 class="display-4">Thank you for shopping with us!</h1>
+<br>
+<div class="row">
+  <div class="col-75">
+    <div class="container1">
+        <div class="row">
+          <div class="col-50">
+            <h2>Estimated Delivery Date</h2>
+               <h5>2 Feb 2022 / 13:00-17:00</h5>
+              <div class="col-25">
+              {% for orders in orders_list %}
+              <br>
+                <div class="container1">
+                  <p align="right">Order ID: {{ orders.get_order_id() }}</p>
+                  <h4>Shipping To</h4>
+                  <p>{{ orders.get_address() }} {{ orders.get_postal_code() }}</p>
+                  <br>
+                  <h4>Card Details</h4>
+                  <p>Name: {{ orders.get_card_name() }}</p>
+                  <p>Card: {{ orders.get_card_no() }}  </p>
+                  <br>
+                  <h4>Your order has been processed.</h4>
+                </div>
+              {% if count > 1 %}
+              <br>
+              <h3>[Other Pending Orders]</h3>
+              {% endif %}
+              {% endfor %}
+              </div>
+          </div>
+        </div>
+        <br>
+        <a href="/retrieveOrder" style="color: #fff">
+            <button class="btn2">Order History</button>
+        </a>
+        <a href="/" style="color: #fff">
+            <button class="btn1">Back To Home</button>
+        </a>
+    </div>
+  </div>
+</div>
+
+</body>
+{% endblock %}

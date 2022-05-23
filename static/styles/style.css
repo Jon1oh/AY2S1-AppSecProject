@@ -1,0 +1,82 @@
+/*
+    *@Author: Jordan Goh Kaifeng, Chan Rui Ru, Seth Lim Rongzhe, Kuah Yu Leong*
+    *@Title: CarOrSell Website CSS*
+    *@Description: CSS stylesheet for the CarOrSell website*
+    *@Published: 18 December 2021*
+    *@Updated: 18 September 2021*
+*/
+
+/* || Global Styles */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    font-family: 'Noto Sans', sans-serif;
+    box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+    width: 15px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #616161;
+    border-radius: 10px;
+    border: 3.5px solid transparent;
+    background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #aaa;
+}
+
+/* || Navbar */
+.active {
+    font-weight: bold;
+}
+
+/* || Back to Top Button */
+#btn-back-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: none;
+}
+
+/* || Footer */
+footer {
+    background-color: #484848;
+    color: #fff;
+}
+
+footer a {
+    color: #fff;
+    text-decoration: none;
+}
+
+footer a:hover {
+    cursor: pointer;
+    color: #0d6efd;
+}
+
+.footer-legal ul {
+    list-style: none;
+}
+
+.footer-legal ul li {
+    border-right: 2px solid #ababab;
+    display: inline-block;
+}
+
+.footer-ul-responsive ul {
+    position: absolute;
+}
+
+.footer-legal ul li:last-child {
+    border-right: none;
+}

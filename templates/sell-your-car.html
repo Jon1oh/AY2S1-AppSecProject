@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Sell Your Car | CarOrSell{% endblock %}
+
+{% block content %}
+{% from "includes/_sellFormHelper.html" import render_field %}
+<h1 class="fw-bold text-center py-4 px-2">Sell Your Car</h1>
+<p class="text-center fst-italic pb-4 px-2">Instead of sending your car to the scrapyard, why not sell it and earn some money back?</p>
+<hr>
+
+<form method="POST" action="">
+    <div class="text-left">
+        <div class="mb-3 mx-auto" style="max-width: 750px;">
+            {{ render_field(form.car_brand, class="form-control", style="list-style-type:none") }}
+        </div>
+        <div class="mb-3 mx-auto" style="max-width: 750px;">
+            {{ render_field(form.car_model, class="form-control") }}
+        </div>
+        <div class="mb-3 mx-auto" style="max-width: 750px;">
+            {{ render_field(form.car_price, class="form-control") }}
+        </div>
+        <div class="mb-3 mx-auto" style="max-width: 750px;">
+            {{ render_field(form.condition, class="form-control") }}
+        </div>
+        <div class="mb-3 mx-auto" style="max-width: 750px;">
+            {{ render_field(form.remarks, class="form-control") }}
+        </div>
+        <div class="mx-auto" style="max-width: 750px;">
+            <input type="submit" value="Submit My Listing" class="btn btn-info w-100">
+        </div>
+    </div>
+</form>
+{% endblock %}

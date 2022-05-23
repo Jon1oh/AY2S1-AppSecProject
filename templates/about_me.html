@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Library Loan System - Retrieve Users{% endblock %}
+
+{% block content %}
+
+<div class="container bootstrap snippets bootdey">
+<div class="panel-body inf-content">
+    <div class="flex" style="padding-left:400px;">
+        {% for user in users_list %}
+        <div class="col-md-6">
+            <strong>User Details</strong><br>
+            <div class="table-responsive">
+            <table class="table table-user-information">
+                <tbody>
+                    <tr>
+                        <td>
+                            <strong>
+                                <span class="glyphicon glyphicon-asterisk text-primary"></span>
+                                ID
+                            </strong>
+                        </td>
+                        <td class="text-primary">
+                          {{ user.get_user_id() }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>
+                                <span class="glyphicon glyphicon-user  text-primary"></span>
+                                Name
+                            </strong>
+                        </td>
+                        <td class="text-primary">
+                            {{ user.get_full_name() }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>
+                                <span class="glyphicon glyphicon-cloud text-primary"></span>
+                                Gender
+                            </strong>
+                        </td>
+                        <td class="text-primary">
+                            {{ user.get_gender() }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>
+                                <span class="glyphicon glyphicon-cloud text-primary"></span>
+                                Address
+                            </strong>
+                        </td>
+                        <td class="text-primary">
+                            {{ user.get_address() }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>
+                                <span class="glyphicon glyphicon-cloud text-primary"></span>
+                                Postal Code
+                            </strong>
+                        </td>
+                        <td class="text-primary">
+                            {{ user.get_postal_code() }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            <strong>
+                                <span class="glyphicon glyphicon-bookmark text-primary"></span>
+                                Username
+                            </strong>
+                        </td>
+                        <td class="text-primary">
+                            {{ user.get_username() }}
+                        </td>
+                    </tr>
+
+
+                    <tr>
+                        <td>
+                            <strong>
+                                <span class="glyphicon glyphicon-eye-open text-primary"></span>
+                                Role
+                            </strong>
+                        </td>
+                        <td class="text-primary">
+                            {{ user.get_member() }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>
+                                <span class="glyphicon glyphicon-envelope text-primary"></span>
+                                Email
+                            </strong>
+                        </td>
+                        <td class="text-primary">
+                            {{ user.get_email() }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>
+                                <span class="glyphicon glyphicon-calendar text-primary"></span>
+                                Mobile
+                            </strong>
+                        </td>
+                        <td class="text-primary">
+                             {{ user.get_mobile_no() }}
+                        </td>
+                    </tr>
+                <tr>
+                    <td><a href="/updateUser/{{user.get_user_id()}}" class="btn btn-warning">Update</a></td>
+        <td>
+        <form action="{{url_for('delete_user', id=user.get_user_id())}}" method="POST">
+        <!--  <input type="submit" value="Delete" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete {{user.get_full_name()}}?');"> -->
+        <!-- Button to Open the Modal -->
+          <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#myModal_{{user.get_user_id()}}">
+  Delete
+</button>
+            <!-- The Modal -->
+<div class="modal" id="myModal_{{user.get_user_id()}}">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h4 class="modal-title">Delete Confirmation</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+        Are you sure you want to delete {{user.get_full_name()}}?
+      </div>
+
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        <input type="submit" value="Delete" class="btn btn-danger">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+        </form>
+                </tr>
+                </tbody>
+            </table>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+</div>
+
+{% endblock %}
+
+

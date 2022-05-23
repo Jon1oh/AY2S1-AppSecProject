@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Community Forum | CarOrSell{% endblock %}
+
+{% block content %}
+<h1 class="fw-bold text-center pb-3">Welcome to the Community Forum!</h1>
+<p class="text-center">Feel free to browse through the list of threads created by our members.</p>
+<p class="text-center">Tight on schedule? You may wish to have a look at our FAQ instead.</p>
+<hr>
+<div class="row">
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <p class="fw-bold m-0">Create a Thread</p>
+            </div>
+            <div class="card-body">
+                <p>Everyone, including public users, can create a thread on our website as we want to promote an inclusive community without compromising on privacy.</p>
+                <div class="accordion" id="guidelinesAccordion">
+                    <div class="accordion-item mb-3">
+                        <h2 class="accordion-header" id="headingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGuidelines" aria-expanded="false" aria-controls="collapseGuidelines">Guidelines for Creating a Thread</button>
+                        </h2>
+                        <div id="collapseGuidelines" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#guidelinesAccordion">
+                            <div class="accordion-body">
+                                <ol type="1">
+                                    <li>Thread contents must not contain any form of harassment, bullying, or threats of violence.</li>
+                                    <li>Respect the privacy of others. Instigating harassment, for example by revealing someone’s personal or confidential information, is not allowed.</li>
+                                    <li>You are not required to use your real name to create a thread, but you are not allowed in any way to impersonate an individual or an entity misleadingly or deceptively.</li>
+                                    <li>Keep thread contents legal, and avoid posting illegal content or soliciting/facilitating illegal or prohibited transactions.</li>
+                                    <li>Do not attempt to perform any actions that interfere with the normal use of the forum.</li>
+                                </ol>
+                                <small class="fw-bold">WARNING: Site administrators of CarOrSell have the legal rights to lodge a report against your actions with real-world authorities should we determine it as a potential threat to people's lives. By proceeding to create a thread, you are deemed to have read and agreed to be legally bound by the guidelines and warning.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <form action="/thread-creation" method="get">
+                    <button type="submit" class="btn btn-info">Create a Thread</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <h3 class="fw-bold">Browse Threads</h3>
+        <hr>
+        <p>There are currently no threads created. Why not start one?</p>
+        <div class="card mb-2">
+            <div class="card-header">
+                <h5 class="fw-bold m-0">(thread title)</h5>
+                <small>Posted by: (username)</small>
+            </div>
+            <div class="card-body">
+                <p>(thread content)</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
