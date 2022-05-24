@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from User import User
 from Forms import CreateThread, CreateUserForm, CreateSellCarForm, LoginForm, CreateOrderForm, CreateAnnouncement, CreateCarsForm
-import shelve, User, Thread, sellcar, Order, Announcement, Cars
+import bcrypt, shelve, User, Thread, sellcar, Order, Announcement, Cars
 from flask_login import login_user, login_required, logout_user, LoginManager
 admin = __import__("admin")
 
@@ -164,7 +164,7 @@ def update_admin(id):
             user.set_username(update_user_form.username.data)
             user.set_password(update_user_form.password.data)
             user.set_confirm_password(update_user_form.confirm_password.data)
-
+            
             db['Users'] = users_dict
             db.close()
 
@@ -213,13 +213,21 @@ def create_user():
                     flash('Username is already taken.', category='error')
                     return redirect(url_for('create_user'))
             else:
-                users = User.User(create_user_form.full_name.data, create_user_form.gender.data,
-                                  create_user_form.email.data,
-                                  create_user_form.mobile_no.data, create_user_form.address.data,
-                                  create_user_form.postal_code.data, create_user_form.username.data,
-                                  create_user_form.password.data, create_user_form.confirm_password.data,
-                                  create_user_form.member.data)
-
+                # password = create_user_form.password.data
+                # confirm_password = create_user_form.confirm_password.data
+                # hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+                # hashedconfirmpw = bcrypt.hashpw(confirm_password.encode('utf-8'), bcrypt.gensalt())
+                users = User.User(create_user_form.full_name.data,
+                                create_user_form.gender.data,
+                                create_user_form.email.data,
+                                create_user_form.mobile_no.data,
+                                create_user_form.address.data,
+                                create_user_form.postal_code.data,
+                                create_user_form.username.data,
+                                create_user_form.password.data, 
+                                create_user_form.confirm_password.data,
+                                create_user_form.member.data)
+                                                  
                 count_id = 0
 
                 try:
@@ -242,12 +250,18 @@ def create_user():
 
 
         else:
-            users = User.User(create_user_form.full_name.data, create_user_form.gender.data,
-                              create_user_form.email.data,
-                              create_user_form.mobile_no.data, create_user_form.address.data,
-                              create_user_form.postal_code.data, create_user_form.username.data,
-                              create_user_form.password.data, create_user_form.confirm_password.data,
-                              create_user_form.member.data)
+            password = create_user_form.password.data
+            confirm_password = create_user_form.confirm_password.data
+            hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            hashedconfirmpw = bcrypt.hashpw(confirm_password.encode('utf-8'), bcrypt.gensalt())
+            users = User.User(create_user_form.full_name.data, 
+                            create_user_form.gender.data,
+                            create_user_form.email.data,
+                            create_user_form.mobile_no.data,
+                            create_user_form.address.data,
+                            create_user_form.password.data,
+                            create_user_form.confirm_password.data,
+                            create_user_form.member.data)
 
             count_id = 0
 
@@ -303,7 +317,12 @@ def update_user(id):
             db = shelve.open('users.db', 'w')
             users_dict = db['Users']
 
-            user = users_dict.get(id)
+            # user = users_dict.get(id)
+            # update_password = update_user_form.password.data
+            # confirm_update_password = update_user_form.confirm_password.data
+            # hashed_update = bcrypt.hashpw(update_password.encode('utf-8'), bcrypt.gensalt())
+            # hashed_update_confirmpw = bcrypt.hashpw(confirm_update_password.encode('utf-8'), bcrypt.gensalt())
+
             user.set_full_name(update_user_form.full_name.data)
             user.set_gender(update_user_form.gender.data)
             user.set_email(update_user_form.email.data)
