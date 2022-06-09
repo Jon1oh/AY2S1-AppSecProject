@@ -1,7 +1,6 @@
 # Edited to change file name
 from flask_login import UserMixin
 
-
 class User(UserMixin):
 
     def __init__(self, full_name, gender, email, mobile_no, address, postal_code, username, password, confirm_password, member):
@@ -17,6 +16,7 @@ class User(UserMixin):
         self.__confirm_password = confirm_password
         self.__member = member
 
+    # getters
     def get_id(self):
         return self.__user_id
 
@@ -53,6 +53,7 @@ class User(UserMixin):
     def get_confirm_password(self):
         return self.__confirm_password
 
+    # setters
     def set_user_id(self, user_id):
         self.__user_id = user_id
 

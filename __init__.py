@@ -3,6 +3,7 @@ from User import User
 from Forms import CreateThread, CreateUserForm, CreateSellCarForm, LoginForm, CreateOrderForm, CreateAnnouncement, CreateCarsForm
 import bcrypt, shelve, User, Thread, sellcar, Order, Announcement, Cars
 from flask_login import login_user, login_required, logout_user, LoginManager
+from asymmetric import asymEncrypt
 admin = __import__("admin")
 
 
@@ -213,10 +214,6 @@ def create_user():
                     flash('Username is already taken.', category='error')
                     return redirect(url_for('create_user'))
             else:
-                # password = create_user_form.password.data
-                # confirm_password = create_user_form.confirm_password.data
-                # hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-                # hashedconfirmpw = bcrypt.hashpw(confirm_password.encode('utf-8'), bcrypt.gensalt())
                 users = User.User(create_user_form.full_name.data,
                                 create_user_form.gender.data,
                                 create_user_form.email.data,
@@ -227,7 +224,7 @@ def create_user():
                                 create_user_form.password.data, 
                                 create_user_form.confirm_password.data,
                                 create_user_form.member.data)
-                                                  
+                asymEncrypt(users.get_confirm_password())
                 count_id = 0
 
                 try:
@@ -250,10 +247,6 @@ def create_user():
 
 
         else:
-            password = create_user_form.password.data
-            confirm_password = create_user_form.confirm_password.data
-            hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-            hashedconfirmpw = bcrypt.hashpw(confirm_password.encode('utf-8'), bcrypt.gensalt())
             users = User.User(create_user_form.full_name.data, 
                             create_user_form.gender.data,
                             create_user_form.email.data,
