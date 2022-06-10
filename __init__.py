@@ -217,11 +217,9 @@ def create_user():
                 password = create_user_form.password.data
                 confirm_password = create_user_form.confirm_password.data
                 
-                hashed_pw = bcrypt.hashpw(password, bcrypt.gensalt())                
+                hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())                
                 password = hashed_pw
-
-                hashed_cfm_pw = bcrypt.hashpw(confirm_password, bcrypt.gensalt())                
-                confirm_password = hashed_cfm_pw
+                confirm_password = hashed_pw
 
                 users = User.User(create_user_form.full_name.data,
                                 create_user_form.gender.data,
@@ -262,9 +260,7 @@ def create_user():
             
             hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())                
             password = hashed_pw
-
-            hashed_cfm_pw = bcrypt.hashpw(confirm_password.encode(), bcrypt.gensalt())                
-            confirm_password = hashed_cfm_pw
+            confirm_password = hashed_pw # confirm password and password must have the same digest
 
             users = User.User(create_user_form.full_name.data,
                             create_user_form.gender.data,
