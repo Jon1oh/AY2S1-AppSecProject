@@ -47,7 +47,7 @@ class User(UserMixin):
     def get_username(self):
         return self.__username
 
-    def get_password(self):
+    def get_password(self):     
         return self.__password
 
     def get_confirm_password(self):

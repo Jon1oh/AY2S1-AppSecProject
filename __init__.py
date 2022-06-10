@@ -1,10 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from User import User
 from Forms import CreateThread, CreateUserForm, CreateSellCarForm, LoginForm, CreateOrderForm, CreateAnnouncement, CreateCarsForm
-import shelve, User, Thread, sellcar, Order, Announcement, Cars
+import shelve, User, Thread, sellcar, Order, Announcement, Cars, bcrypt
 from flask_login import login_user, login_required, logout_user, LoginManager
-from hashing import hashing
-import re
 admin = __import__("admin")
 
 
@@ -85,8 +83,7 @@ def login():
     if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
         login_form = LoginForm(request.form)
         if request.method == "POST" and login_form.validate():
-            username = login_form.username.data
-            print(username)
+            username = login_form.username.data            
             password = login_form.password.data
             db = shelve.open('users.db', 'r')
             db_content = db['Users']
@@ -208,81 +205,78 @@ def create_user():
         except:
             print("Error in retrieving Users from 'user.db'.")  # pop-up error
         username = create_user_form.username.data
-        if users_dict: # if users_dict contains someting inside
+        if users_dict:
             for key in users_dict:
                 content = users_dict[key]
                 if username == content.get_username():
                     flash('Username is already taken.', category='error')
                     return redirect(url_for('create_user'))
-            else: # when username is not taken
+            else:
+                # generate hash for password and confirm_password
+                # encode password
                 password = create_user_form.password.data
-                regex = re.compile('[@_!#$%^&*()<>?/\|}{~:]')
+                confirm_password = create_user_form.confirm_password.data
+                
+                hashed_pw = bcrypt.hashpw(password, bcrypt.gensalt())                
+                password = hashed_pw
 
-                if (regex.search(password) == None):
-                    users = User.User(create_user_form.full_name.data,
-                                    create_user_form.gender.data,
-                                    create_user_form.email.data,
-                                    create_user_form.mobile_no.data,
-                                    create_user_form.address.data,
-                                    create_user_form.postal_code.data,
-                                    create_user_form.username.data,
-                                    create_user_form.password.data, 
-                                    create_user_form.confirm_password.data,
-                                    create_user_form.member.data)
-                    hashing(users.get_password(), users.get_confirm_password())
-                    flash(f"Account created for {create_user_form.username.data}!", 'success')
-                    try:
-                        for key in users_dict:
-                            count_id = key
-                            count_id += 1
-                            users.set_user_id(count_id)
-                    except:
-                        count_id += 1
-                        users.set_user_id(count_id)
+                hashed_cfm_pw = bcrypt.hashpw(confirm_password, bcrypt.gensalt())                
+                confirm_password = hashed_cfm_pw
 
-                    users_dict[users.get_user_id()] = users  # get user id
-                    db['Users'] = users_dict
-
-                    # Test codes
-                    users_dict = db['Users']
-                    user = users_dict[users.get_user_id()]
-                    print(user.get_full_name(), "was stored in user.db successfully with user_id ==", user.get_user_id())
-                    db.close()
-
-                else:
-                    flash("System does not accept special characters in passoword.", category='error')
-                    return redirect(url_for('create_user'))
+                users = User.User(create_user_form.full_name.data,
+                                create_user_form.gender.data,
+                                create_user_form.email.data,
+                                create_user_form.mobile_no.data,
+                                create_user_form.address.data,
+                                create_user_form.postal_code.data,
+                                create_user_form.username.data,
+                                password, 
+                                confirm_password,
+                                create_user_form.member.data)
                 count_id = 0
 
-                # try:
-                #     for key in users_dict:
-                #         count_id = key
-                #         count_id += 1
-                #         users.set_user_id(count_id)
-                # except:
-                #     count_id += 1
-                #     users.set_user_id(count_id)
+                try:
+                    for key in users_dict:
+                        count_id = key
+                        count_id += 1
+                        users.set_user_id(count_id)
+                except:
+                    count_id += 1
+                    users.set_user_id(count_id)
 
-                # users_dict[users.get_user_id()] = users  # get user id
-                # db['Users'] = users_dict
+                users_dict[users.get_user_id()] = users  # get user id
+                db['Users'] = users_dict
 
-                # # Test codes
-                # users_dict = db['Users']
-                # user = users_dict[users.get_user_id()]
-                # print(user.get_full_name(), "was stored in user.db successfully with user_id ==", user.get_user_id())
-                # db.close()
+                # Test codes
+                users_dict = db['Users']
+                user = users_dict[users.get_user_id()]
+                print(user.get_full_name(), "was stored in user.db successfully with user_id ==", user.get_user_id())
+                db.close()
 
 
-        else: # when there is nothing inside users_dict
-            users = User.User(create_user_form.full_name.data, 
+        else:
+            # generate hash for password and confirm_password
+            # encode password
+            password = create_user_form.password.data
+            confirm_password = create_user_form.confirm_password.data
+            
+            hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())                
+            password = hashed_pw
+
+            hashed_cfm_pw = bcrypt.hashpw(confirm_password.encode(), bcrypt.gensalt())                
+            confirm_password = hashed_cfm_pw
+
+            users = User.User(create_user_form.full_name.data,
                             create_user_form.gender.data,
                             create_user_form.email.data,
                             create_user_form.mobile_no.data,
                             create_user_form.address.data,
-                            create_user_form.password.data,
-                            create_user_form.confirm_password.data,
-                            create_user_form.member.data)
-
+                            create_user_form.postal_code.data,
+                            create_user_form.username.data,
+                            password, 
+                            confirm_password,
+                            create_user_form.member.data)                       
+                        
             count_id = 0
 
             try:
