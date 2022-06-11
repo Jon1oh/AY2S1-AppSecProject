@@ -92,7 +92,10 @@ def login():
                 print(content)
                 if username == content.get_username():
                     print("Username exist")
-                    if password == content.get_password():
+                    # this compares the digest of the passwrod (when regiester for account) with the digest of the
+                    # password input
+                    if bcrypt.checkpw(password.encode(), content.get_password()):
+                        print("digest matches!")
                         flash('You have logged in successfully.', category='success')
                         login_user(content, remember=True)
                         session['user_id'] = content.get_user_id()
@@ -103,7 +106,7 @@ def login():
                             session['logged_in'] = True
                             return redirect(url_for('home'))
                     else:
-                        print("Password does not exist")
+                        print("password digests don't match")
                         flash('Incorrect username or password', category='error')
                 else:
                     print("Username does not exist")
@@ -255,8 +258,8 @@ def create_user():
         else:
             # generate hash for password and confirm_password
             # encode password
-            password = create_user_form.password.data
-            confirm_password = create_user_form.confirm_password.data
+            password_hash = create_user_form.password.data
+            confirm_password_hash = create_user_form.confirm_password.data
             
             hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())                
             password = hashed_pw
@@ -269,8 +272,8 @@ def create_user():
                             create_user_form.address.data,
                             create_user_form.postal_code.data,
                             create_user_form.username.data,
-                            password, 
-                            confirm_password,
+                            password_hash, 
+                            confirm_password_hash,
                             create_user_form.member.data)                       
                         
             count_id = 0
