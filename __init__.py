@@ -1,8 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from User import User
 from Forms import CreateThread, CreateUserForm, CreateSellCarForm, LoginForm, CreateOrderForm, CreateAnnouncement, CreateCarsForm
-import shelve, User, Thread, sellcar, Order, Announcement, Cars, bcrypt
+import shelve, User, Thread, sellcar, Order, Announcement, Cars, bcrypt, os, base64, rsa, re
 from flask_login import login_user, login_required, logout_user, LoginManager
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
 admin = __import__("admin")
 
 
@@ -85,6 +89,8 @@ def login():
         if request.method == "POST" and login_form.validate():
             username = login_form.username.data            
             password = login_form.password.data
+
+            regex = re.compile("[$&+,:;=?@#|'<>.-^*()%!]")
             db = shelve.open('users.db', 'r')
             db_content = db['Users']
             for key in db_content:
@@ -92,9 +98,14 @@ def login():
                 print(content)
                 if username == content.get_username():
                     print("Username exist")
-                    # this compares the digest of the passwrod (when regiester for account) with the digest of the
-                    # password input
-                    if bcrypt.checkpw(password.encode(), content.get_password()):
+                    # check if password have special characters
+                    if re.findall(regex, password):
+                        flash("Incorrect username or password", category='error')
+                        return render_template('login.html', form=login_form) # return to login page
+                    # this compares the digest of the password (when regiester for account) with the digest of the
+                    # login password input                    
+                    if bcrypt.checkpw(password.encode(), content.get_password()): # content.get_password is already the digest of the hashed password
+                        # checkpw() works by hashing "password.encode()" and comparing the generated digest with the already stored password digest in database
                         print("digest matches!")
                         flash('You have logged in successfully.', category='success')
                         login_user(content, remember=True)
@@ -216,43 +227,51 @@ def create_user():
                     return redirect(url_for('create_user'))
             else:
                 # generate hash for password and confirm_password
-                # encode password
+
+                # store password and confirm password input data in variables
                 password = create_user_form.password.data
                 confirm_password = create_user_form.confirm_password.data
-                
-                hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())                
-                password = hashed_pw
-                confirm_password = hashed_pw
 
-                users = User.User(create_user_form.full_name.data,
-                                create_user_form.gender.data,
-                                create_user_form.email.data,
-                                create_user_form.mobile_no.data,
-                                create_user_form.address.data,
-                                create_user_form.postal_code.data,
-                                create_user_form.username.data,
-                                password, 
-                                confirm_password,
-                                create_user_form.member.data)
-                count_id = 0
+                # check if password has special characters
+                regex = re.compile("[$&+,:;=?@#|'<>.-^*()%!]")
+                if re.findall(regex, password) or re.findall(regex, confirm_password): # if there are special characters in the password/confirm password input
+                    flash("Sorry, system does not allow special characters in passwords.", category='error')
+                    return redirect(url_for('create_user'))
+                else: # when there is no special characters in password input
+                    
+                    hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())                
+                    password = hashed_pw
+                    confirm_password = hashed_pw
 
-                try:
-                    for key in users_dict:
-                        count_id = key
+                    users = User.User(create_user_form.full_name.data,
+                                    create_user_form.gender.data,
+                                    create_user_form.email.data,
+                                    create_user_form.mobile_no.data,
+                                    create_user_form.address.data,
+                                    create_user_form.postal_code.data,
+                                    create_user_form.username.data,
+                                    password, 
+                                    confirm_password,
+                                    create_user_form.member.data)
+                    count_id = 0
+
+                    try:
+                        for key in users_dict:
+                            count_id = key
+                            count_id += 1
+                            users.set_user_id(count_id)
+                    except:
                         count_id += 1
                         users.set_user_id(count_id)
-                except:
-                    count_id += 1
-                    users.set_user_id(count_id)
 
-                users_dict[users.get_user_id()] = users  # get user id
-                db['Users'] = users_dict
+                    users_dict[users.get_user_id()] = users  # get user id
+                    db['Users'] = users_dict
 
-                # Test codes
-                users_dict = db['Users']
-                user = users_dict[users.get_user_id()]
-                print(user.get_full_name(), "was stored in user.db successfully with user_id ==", user.get_user_id())
-                db.close()
+                    # Test codes
+                    users_dict = db['Users']
+                    user = users_dict[users.get_user_id()]
+                    print(user.get_full_name(), "was stored in user.db successfully with user_id ==", user.get_user_id())
+                    db.close()
 
 
         else:
@@ -754,8 +773,34 @@ def checkout():
             orders_dict = db['Orders']
         except:
             print("Error in retrieving Orders from 'orders.db'.")
+        
+        if orders_dict:
+            pass
+        # encrypt the card_name, card_no, expmonth, expyear, cvv
+        # assign data to variables and encode them
+        encoded_card_name = (create_order_form.card_name.data).encode()
+        encoded_card_no = (create_order_form.card_no.data).encode()
+        encoded_expMonth = (create_order_form.expmonth.data).encode()
+        encoded_expYear = (create_order_form.expyear.data).encode()
+        encoded_CVV = (create_order_form.cvv.data).encode()
 
-        orders = Order.Order(create_order_form.address.data, create_order_form.postal_code.data, create_order_form.card_name.data, create_order_form.card_no.data, create_order_form.expmonth.data, create_order_form.expyear.data, create_order_form.cvv.data)
+        # encrypt the data now with rsa
+        publicKey, privateKey = rsa.newkeys(512) # define the key length when generated
+        encrypted_card_name = rsa.encrypt(encoded_card_name, publicKey)
+        encrypted_card_no = rsa.encrypt(encoded_card_no, publicKey)
+        encrypted_expMonth = rsa.encrypt(encoded_expMonth, publicKey)
+        encrypted_expYear = rsa.encrypt(encoded_expYear, publicKey)
+        encrypted_CVV = rsa.encrypt(encoded_CVV, publicKey)
+        
+        # generate public and private key 
+        orders = Order.Order(create_order_form.address.data, 
+                            create_order_form.postal_code.data,
+                            encrypted_card_name, 
+                            encrypted_card_no,
+                            encrypted_expMonth, 
+                            encrypted_expYear, 
+                            encrypted_CVV)
+
         orders_dict[orders.get_order_id()] = orders
         db['Orders'] = orders_dict
 
