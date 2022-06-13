@@ -795,11 +795,11 @@ def checkout():
         # generate public and private key 
         orders = Order.Order(create_order_form.address.data, 
                             create_order_form.postal_code.data,
-                            encrypted_card_name, 
-                            encrypted_card_no,
-                            encrypted_expMonth, 
-                            encrypted_expYear, 
-                            encrypted_CVV)
+                            create_order_form.card_name.data,
+                            create_order_form.card_no.data,
+                            create_order_form.expmonth.data,
+                            create_order_form.expyear.data, 
+                            create_order_form.cvv.data)
 
         orders_dict[orders.get_order_id()] = orders
         db['Orders'] = orders_dict
@@ -810,7 +810,7 @@ def checkout():
         print(orders.get_card_name(), "was stored in 'orders.db' successfully with order_id ==", orders.get_order_id())
 
         db.close()
-
+        print(orders_dict)
         return redirect(url_for('order_confirmation'))
     return render_template('checkout.html', form=create_order_form)
 # Product Purchase END
