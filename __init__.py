@@ -1,10 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, Response
 from User import User
 from Forms import CreateThread, CreateUserForm, CreateSellCarForm, LoginForm, CreateOrderForm, CreateAnnouncement, CreateCarsForm
 import shelve, User, Thread, sellcar, Order, Announcement, Cars, bcrypt, rsa, re
 from flask_login import login_user, login_required, logout_user, LoginManager
+from werkzeug.datastructures import Headers
 admin = __import__("admin")
-
 
 app = Flask(__name__)
 app.secret_key = 'ff59a421971cd4de00539f85d307e6bb'
@@ -42,6 +42,21 @@ def authentication_required():
 def admin_authentication_required():
     return render_template('admin-authentication-required.html')
 # Session Error/Exploit Prevention END
+
+# Host Header Injection Handling START
+# @app.route('/route')
+# def route():
+#     content_type = request.args["Content-Type"]
+#     allowed_content_types = r'application/ (pdf|json|xml)'
+#     response = Response()
+#     headers = Headers()
+#     if re.match(allowed_content_types, content_type): # compliant
+#         headers.add("Content-Type", content_type)
+#     else:
+#         headers.add("Content-Type", "application/json")
+#     response.headers = headers
+#     return response
+# Host Heaeder Injection Handling END
 
 
 # Error 404 Handling START
