@@ -759,32 +759,39 @@ def checkout():
         except:
             print("Error in retrieving Orders from 'orders.db'.")
         
-        if orders_dict:
-            pass
         # encrypt the card_name, card_no, expmonth, expyear, cvv
-        # assign data to variables and encode them
-        encoded_card_name = (create_order_form.card_name.data).encode()
-        encoded_card_no = (create_order_form.card_no.data).encode()
-        encoded_expMonth = (create_order_form.expmonth.data).encode()
-        encoded_expYear = (create_order_form.expyear.data).encode()
-        encoded_CVV = (create_order_form.cvv.data).encode()
-
-        # encrypt the data now with rsa
+        # encrypt the data with rsa
         publicKey, privateKey = rsa.newkeys(512) # define the key length when generated
-        encrypted_card_name = rsa.encrypt(encoded_card_name, publicKey)
-        encrypted_card_no = rsa.encrypt(encoded_card_no, publicKey)
-        encrypted_expMonth = rsa.encrypt(encoded_expMonth, publicKey)
-        encrypted_expYear = rsa.encrypt(encoded_expYear, publicKey)
-        encrypted_CVV = rsa.encrypt(encoded_CVV, publicKey)
-        
-        # generate public and private key 
+        encrypted_card_name = rsa.encrypt((create_order_form.card_name.data).encode(), publicKey)
+        encrypted_card_no = rsa.encrypt((create_order_form.card_no.data).encode(), publicKey)
+        encrypted_expMonth = rsa.encrypt((create_order_form.expmonth.data).encode(), publicKey)
+        encrypted_expYear = rsa.encrypt((create_order_form.expyear.data).encode(), publicKey)
+        encrypted_CVV = rsa.encrypt((create_order_form.cvv.data).encode(), publicKey)
+
+        decrypted_card_name = rsa.decrypt(encrypted_card_name, privateKey).decode()
+        decrypted_card_no = rsa.decrypt(encrypted_card_no, privateKey).decode()
+        decrypted_expMonth = rsa.decrypt(encrypted_expMonth, privateKey).decode()
+        decrypted_expYear = rsa.decrypt(encrypted_expYear, privateKey).decode()
+        decrypted_cvv = rsa.decrypt(encrypted_CVV, privateKey).decode()
+                    
         orders = Order.Order(create_order_form.address.data, 
                             create_order_form.postal_code.data,
-                            create_order_form.card_name.data,
-                            create_order_form.card_no.data,
-                            create_order_form.expmonth.data,
-                            create_order_form.expyear.data, 
-                            create_order_form.cvv.data)
+                            encrypted_card_name,
+                            encrypted_card_no,
+                            encrypted_expMonth,
+                            encrypted_expYear, 
+                            encrypted_CVV)
+        
+        count_id = 0
+
+        try:
+            for key in orders_dict:
+                count_id = key
+                count_id += 1
+                orders.set_order_id(count_id)
+        except:
+            count_id += 1
+            orders.set_order_id(count_id)
 
         orders_dict[orders.get_order_id()] = orders
         db['Orders'] = orders_dict
@@ -795,7 +802,9 @@ def checkout():
         print(orders.get_card_name(), "was stored in 'orders.db' successfully with order_id ==", orders.get_order_id())
 
         db.close()
-        print(orders_dict)
+        for key, value in orders_dict.items():
+            print(f"key is {key}")
+            print(f"{key}:{value.get_card_name()}, {value.get_card_no()}, {value.get_expmonth()}, {value.get_expyear()}, {value.get_cvv()}\n")
         return redirect(url_for('order_confirmation'))
     return render_template('checkout.html', form=create_order_form)
 # Product Purchase END
@@ -810,7 +819,6 @@ def order_confirmation():
         db = shelve.open('orders.db', 'r')
         orders_dict = db['Orders']
         db.close()
-
     except:
         print("Error in retrieving Orders from 'orders.db'.")
 
