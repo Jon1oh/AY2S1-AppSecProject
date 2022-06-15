@@ -47,27 +47,32 @@ def admin_authentication_required():
 # Error 404 Handling START
 @app.errorhandler(404)
 def page_not_found(e):
+    print(e)
+    app.logger.error(f"error: {e}, route: {request.url}")
     return render_template('error404.html'), 404
 # Error 404 Handling END
 
 @app.route('/about_me')
 def about():
-    try:
-        users_dict = {}
-        db = shelve.open('users.db', 'r')
-        users_dict = db['Users']
-        db.close()
+    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+        return render_template('authentication-required.html')
+    else:
+        try:
+            users_dict = {}
+            db = shelve.open('users.db', 'r')
+            users_dict = db['Users']
+            db.close()
 
-        users_list = []
-        if session.get('user_id') is not None:
-            users_list.append(users_dict.get(session.get('user_id')))
-        # for key in users_dict:
-        #     user = users_dict.get(key)
-        #     users_list.append(user)
+            users_list = []
+            if session.get('user_id') is not None:
+                users_list.append(users_dict.get(session.get('user_id')))
+            # for key in users_dict:
+            #     user = users_dict.get(key)
+            #     users_list.append(user)
 
-        return render_template('about_me.html', count=len(users_list), users_list=users_list)
-    except:
-        print("Error1")
+            return render_template('about_me.html', count=len(users_list), users_list=users_list)
+        except:
+            print("Error1")
 
 
 # Landing Page START
@@ -133,22 +138,25 @@ def logout():
 # Account Management START
 @app.route('/retrieve_admin', methods=['GET', 'POST'])
 def retrieve_admin():
-    try:
-        users_dict = {}
-        db = shelve.open('users.db', 'r')
-        users_dict = db['Users']
-        db.close()
+    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+        return render_template('admin-authentication-required.html')
+    else:    
+        try:
+            users_dict = {}
+            db = shelve.open('users.db', 'r')
+            users_dict = db['Users']
+            db.close()
 
-        users_list = []
-        # if session.get('user_id') is not None:
-        #     users_list.append(users_dict.get(session.get('user_id')))
-        for key in users_dict:
-            user = users_dict.get(key)
-            users_list.append(user)
+            users_list = []
+            # if session.get('user_id') is not None:
+            #     users_list.append(users_dict.get(session.get('user_id')))
+            for key in users_dict:
+                user = users_dict.get(key)
+                users_list.append(user)
 
-        return render_template('retrieve_admin.html', count=len(users_list), users_list=users_list)
-    except:
-        print("Error1")
+            return render_template('retrieve_admin.html', count=len(users_list), users_list=users_list)
+        except:
+            print("Error1")
 
 
 @app.route('/updateAdmin/<int:id>/', methods=['GET', 'POST'])  # exception
@@ -768,31 +776,23 @@ def checkout():
         encrypted_expYear = rsa.encrypt((create_order_form.expyear.data).encode(), publicKey)
         encrypted_CVV = rsa.encrypt((create_order_form.cvv.data).encode(), publicKey)
 
-        decrypted_card_name = rsa.decrypt(encrypted_card_name, privateKey).decode()
-        decrypted_card_no = rsa.decrypt(encrypted_card_no, privateKey).decode()
-        decrypted_expMonth = rsa.decrypt(encrypted_expMonth, privateKey).decode()
-        decrypted_expYear = rsa.decrypt(encrypted_expYear, privateKey).decode()
-        decrypted_cvv = rsa.decrypt(encrypted_CVV, privateKey).decode()
-                    
+        # orders = Order.Order(create_order_form.address.data, 
+        #                     create_order_form.postal_code.data,
+        #                     encrypted_card_name,
+        #                     encrypted_card_no,
+        #                     encrypted_expMonth,
+        #                     encrypted_expYear, 
+        #                     encrypted_CVV)
+
         orders = Order.Order(create_order_form.address.data, 
                             create_order_form.postal_code.data,
-                            encrypted_card_name,
-                            encrypted_card_no,
-                            encrypted_expMonth,
-                            encrypted_expYear, 
-                            encrypted_CVV)
+                            create_order_form.card_name,
+                            create_order_form.card_no,
+                            create_order_form.expMonth,
+                            create_order_form.expYear, 
+                            create_order_form.cvv)
+
         
-        count_id = 0
-
-        try:
-            for key in orders_dict:
-                count_id = key
-                count_id += 1
-                orders.set_order_id(count_id)
-        except:
-            count_id += 1
-            orders.set_order_id(count_id)
-
         orders_dict[orders.get_order_id()] = orders
         db['Orders'] = orders_dict
 
@@ -800,11 +800,11 @@ def checkout():
         orders_dict = db['Orders']
         orders = orders_dict[orders.get_order_id()]
         print(orders.get_card_name(), "was stored in 'orders.db' successfully with order_id ==", orders.get_order_id())
-
         db.close()
         for key, value in orders_dict.items():
             print(f"key is {key}")
-            print(f"{key}:{value.get_card_name()}, {value.get_card_no()}, {value.get_expmonth()}, {value.get_expyear()}, {value.get_cvv()}\n")
+            print(f"{key}:\naddress:{value.get_address()}\npostal code:{value.get_postal_code()}\ncard_name:{value.get_card_name()}\ncard_no:{value.get_card_no()}\nexpMonth:{value.get_expmonth()},\nexpYear:{value.get_expyear()}\ncvv:{value.get_cvv()}\n")
+
         return redirect(url_for('order_confirmation'))
     return render_template('checkout.html', form=create_order_form)
 # Product Purchase END
@@ -814,14 +814,14 @@ def checkout():
 @app.route('/order-confirmation')
 def order_confirmation():
     orders_dict = {}
-
+    publicKey, privateKey = rsa.newkeys(512)
     try:
         db = shelve.open('orders.db', 'r')
         orders_dict = db['Orders']
         db.close()
     except:
         print("Error in retrieving Orders from 'orders.db'.")
-
+    
     orders_list = []
     for key in orders_dict:
         orders = orders_dict.get(key)
@@ -834,24 +834,26 @@ def order_confirmation():
 # Order History START
 @app.route('/retrieveOrder')
 def retrieve_order():
-    orders_dict = {}
+    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+        return render_template('admin-authentication-required.html')
+    else:
+        orders_dict = {}
 
-    try:
-        db = shelve.open('orders.db', 'r')
-        orders_dict = db['Orders']
-        db.close()
+        try:
+            db = shelve.open('orders.db', 'r')
+            orders_dict = db['Orders']
+            db.close()
 
-    except:
-        print("Error in retrieving Orders from 'orders.db'.")
+        except:
+            print("Error in retrieving Orders from 'orders.db'.")
 
-    orders_list = []
-    for key in orders_dict:
-        orders = orders_dict.get(key)
-        orders_list.append(orders)
+        orders_list = []
+        for key in orders_dict:
+            orders = orders_dict.get(key)
+            orders_list.append(orders)
 
-    return render_template('retrieveOrder.html', count=len(orders_list), orders_list=orders_list[::-1])
+        return render_template('retrieveOrder.html', count=len(orders_list), orders_list=orders_list[::-1])
 # Order History END
-
 
 # Delete Order START
 @app.route('/deleteOrder/<int:id>', methods=['POST'])
@@ -875,20 +877,23 @@ def delete_order(id):
 # Retrieve Sell Cars START
 @app.route('/retrieveSellCars')
 def retrieve_sellcars():
-    sellcars_dict = {}
-    db = shelve.open('sellcar.db', 'r')
-    try:
-        sellcars_dict = db['Sellcars']
-        db.close()
-    except:
-        print("Error in retrieving Sellcars from sellcar.db.")
+    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+        return render_template('admin-authentication-required.html')
+    else:
+        sellcars_dict = {}
+        db = shelve.open('sellcar.db', 'r')
+        try:
+            sellcars_dict = db['Sellcars']
+            db.close()
+        except:
+            print("Error in retrieving Sellcars from sellcar.db.")
 
-    sellcar_list = []
-    for key in sellcars_dict:
-        sellcar = sellcars_dict.get(key)
-        sellcar_list.append(sellcar)
+        sellcar_list = []
+        for key in sellcars_dict:
+            sellcar = sellcars_dict.get(key)
+            sellcar_list.append(sellcar)
 
-    return render_template('retrieveSellCars.html', count=len(sellcar_list), sellcar_list=sellcar_list)
+        return render_template('retrieveSellCars.html', count=len(sellcar_list), sellcar_list=sellcar_list)
 # Retrieve Sell Cars END
 
 
@@ -929,7 +934,6 @@ def update_sellcars(id):
         return render_template('updateSellCars.html', form=update_sellcars)
 # Update Sell Cars END
 
-
 # Delete Sell Cars START
 @app.route('/deleteSellCars/<int:id>', methods=['POST'])
 def delete_sellcar(id):
@@ -952,111 +956,122 @@ def delete_sellcar(id):
 # Car Page START
 @app.route('/createCar', methods=['GET', 'POST'])
 def create_car():
-    create_car_form = CreateCarsForm(request.form)
-    if request.method == 'POST' and create_car_form.validate():
-        create_cars_dict = {}
-        db = shelve.open('createCar.db', 'c')
+    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+        return render_template('authentication-required.html')
+    else:
+        create_car_form = CreateCarsForm(request.form)
+        if request.method == 'POST' and create_car_form.validate():
+            create_cars_dict = {}
+            db = shelve.open('createCar.db', 'c')
 
-        try:
-            create_cars_dict = db['Createcars']
-        except:
-            print("Error in retrieving Createcars from createCar.db.")
+            try:
+                create_cars_dict = db['Createcars']
+            except:
+                print("Error in retrieving Createcars from createCar.db.")
 
-        Createcar = Cars.Cars(create_car_form.car_model.data, create_car_form.car_brand.data, create_car_form.car_price.data)
+            Createcar = Cars.Cars(create_car_form.car_model.data, create_car_form.car_brand.data, create_car_form.car_price.data)
 
-        count_id = 0
-        try:
-            for key in create_cars_dict:
-                count_id = key
+            count_id = 0
+            try:
+                for key in create_cars_dict:
+                    count_id = key
+                    count_id += 1
+                    Createcar.set_car_id(count_id)
+            except:
                 count_id += 1
-                Createcar.set_car_id(count_id)
-        except:
-            count_id += 1
-            Createcar.set_car_id
+                Createcar.set_car_id
 
-        create_cars_dict[Createcar.get_car_id()] = Createcar
-        db['Createcars'] = create_cars_dict
+            create_cars_dict[Createcar.get_car_id()] = Createcar
+            db['Createcars'] = create_cars_dict
 
-        # Test codes
-        create_cars_dict = db['Createcars']
-        Createcar = create_cars_dict[Createcar.get_car_id()]
-        print(Createcar.get_car_model(), Createcar.get_car_brand(), "was stored in sellcar.db successfully with sellcar_id ==", Createcar.get_car_id())
+            # Test codes
+            create_cars_dict = db['Createcars']
+            Createcar = create_cars_dict[Createcar.get_car_id()]
+            print(Createcar.get_car_model(), Createcar.get_car_brand(), "was stored in sellcar.db successfully with sellcar_id ==", Createcar.get_car_id())
 
-        db.close()
+            db.close()
 
-        return redirect(url_for('home'))
-    return render_template('createCar.html', form=create_car_form)
+            return redirect(url_for('home'))
+        return render_template('createCar.html', form=create_car_form)
 # Car Page END
 
 
 # Admin Retrieve Cars START
 @app.route('/adminRetrieveCars')
 def admin_retrieve_cars():
-    create_cars_dict = {}
-    db = shelve.open('createCar.db', 'r')
-    create_cars_dict = db['Createcars']
-    db.close()
-
-    createCar_list = []
-    for key in create_cars_dict:
-        cars = create_cars_dict.get(key)
-        createCar_list.append(cars)
-
-    return render_template('adminRetrieveCars.html', count=len(createCar_list), createCar_list=createCar_list)
-# Admin Retrieve Cars END
-
-
-# Update create cars start
-@app.route('/adminUpdateCars/<int:id>/', methods=['GET', 'POST'])
-def update_cars(id):
-
-    update_cars = CreateCarsForm(request.form)
-    if request.method == 'POST' and update_cars.validate():
-        db = shelve.open('createCar.db', 'w')
-        create_cars_dict = db['Createcars']
-
-        create_car = create_cars_dict.get(id)
-        create_car.set_car_brand(update_cars.car_brand.data)
-        create_car.set_car_model(update_cars.car_model.data)
-        create_car.set_car_price(update_cars.car_price.data)
-
-
-        db['Createcars'] = create_cars_dict
-        db.close()
-
-        return redirect(url_for('admin_retrieve_cars'))
-
+    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+        return render_template('admin-authentication-required.html')
     else:
         create_cars_dict = {}
         db = shelve.open('createCar.db', 'r')
         create_cars_dict = db['Createcars']
         db.close()
 
-        create_car = create_cars_dict.get(id)
-        create_car.set_car_brand(update_cars.car_brand.data)
-        create_car.set_car_model(update_cars.car_model.data)
-        create_car.set_car_price(update_cars.car_price.data)
+        createCar_list = []
+        for key in create_cars_dict:
+            cars = create_cars_dict.get(key)
+            createCar_list.append(cars)
 
-        return render_template('adminUpdateCars.html', form=update_cars)
+        return render_template('adminRetrieveCars.html', count=len(createCar_list), createCar_list=createCar_list)
+# Admin Retrieve Cars END
+
+
+# Update create cars start
+@app.route('/adminUpdateCars/<int:id>/', methods=['GET', 'POST'])
+def update_cars(id):
+    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+        return render_template('admin-authentication-required.html')
+    else:
+        update_cars = CreateCarsForm(request.form)
+        if request.method == 'POST' and update_cars.validate():
+            db = shelve.open('createCar.db', 'w')
+            create_cars_dict = db['Createcars']
+
+            create_car = create_cars_dict.get(id)
+            create_car.set_car_brand(update_cars.car_brand.data)
+            create_car.set_car_model(update_cars.car_model.data)
+            create_car.set_car_price(update_cars.car_price.data)
+
+
+            db['Createcars'] = create_cars_dict
+            db.close()
+
+            return redirect(url_for('admin_retrieve_cars'))
+
+        else:
+            create_cars_dict = {}
+            db = shelve.open('createCar.db', 'r')
+            create_cars_dict = db['Createcars']
+            db.close()
+
+            create_car = create_cars_dict.get(id)
+            create_car.set_car_brand(update_cars.car_brand.data)
+            create_car.set_car_model(update_cars.car_model.data)
+            create_car.set_car_price(update_cars.car_price.data)
+
+            return render_template('adminUpdateCars.html', form=update_cars)
 # Update create cars END
 
 
 # Delete create Cars START
 @app.route('/deleteCars/<int:id>', methods=['POST'])
 def delete_car(id):
-    Create_cars_dict = {}
-    db = shelve.open('Createcar.db', 'w')
-    try:
-        Create_cars_dict = db['Createcars']
-    except:
-        print("Error in retrieving createcars from Createcar.db.")
+    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+        return render_template('admin-authentication-required.html')
+    else:
+        Create_cars_dict = {}
+        db = shelve.open('Createcar.db', 'w')
+        try:
+            Create_cars_dict = db['Createcars']
+        except:
+            print("Error in retrieving createcars from Createcar.db.")
 
-    Create_cars_dict.pop(id)
+        Create_cars_dict.pop(id)
 
-    db['Createcars'] = Create_cars_dict
-    db.close()
+        db['Createcars'] = Create_cars_dict
+        db.close()
 
-    return redirect(url_for('admin_retrieve_cars'))
+        return redirect(url_for('admin_retrieve_cars'))
 # Delete create Cars END
 
 
@@ -1071,40 +1086,46 @@ def admin_dashboard():
 
 @app.route('/dashboard')
 def sales():
-    orders_dict = {}
+    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+        return render_template('admin-authentication-required.html')
+    else:
+        orders_dict = {}
 
-    try:
-        db = shelve.open('orders.db', 'r')
-        orders_dict = db['Orders']
-        db.close()
+        try:
+            db = shelve.open('orders.db', 'r')
+            orders_dict = db['Orders']
+            db.close()
 
-    except:
-        print("Error in retrieving Orders from 'orders.db'.")
+        except:
+            print("Error in retrieving Orders from 'orders.db'.")
 
-    orders_list = []
-    for key in orders_dict:
-        orders = orders_dict.get(key)
-        orders_list.append(orders)
+        orders_list = []
+        for key in orders_dict:
+            orders = orders_dict.get(key)
+            orders_list.append(orders)
 
-    return render_template('dashboard.html', count=len(orders_list), orders_list=orders_list[::-1])
+        return render_template('dashboard.html', count=len(orders_list), orders_list=orders_list[::-1])
 # Admin Page END
 
 # Sales Order Deletion START
 @app.route('/deleteOrderAdmin/<int:id>', methods=['POST'])
 def delete_order_admin(id):
-    orders_dict = {}
-    db = shelve.open('orders.db', 'w')
-    try:
-        orders_dict = db['Orders']
-    except:
-        print("Error in retrieving Orders from orders.db.")
+    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+        return render_template('admin-authentication-required.html')
+    else:
+        orders_dict = {}
+        db = shelve.open('orders.db', 'w')
+        try:
+            orders_dict = db['Orders']
+        except:
+            print("Error in retrieving Orders from orders.db.")
 
-    orders_dict.pop(id)
+        orders_dict.pop(id)
 
-    db['Orders'] = orders_dict
-    db.close()
+        db['Orders'] = orders_dict
+        db.close()
 
-    return redirect(url_for('sales'))
+        return redirect(url_for('sales'))
 # Sales Order END
 
 # Footer Link Routing START
