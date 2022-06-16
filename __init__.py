@@ -1,9 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, Response
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from User import User
 from Forms import CreateThread, CreateUserForm, CreateSellCarForm, LoginForm, CreateOrderForm, CreateAnnouncement, CreateCarsForm
 import shelve, User, Thread, sellcar, Order, Announcement, Cars, bcrypt, rsa, re
 from flask_login import login_user, login_required, logout_user, LoginManager
-from werkzeug.datastructures import Headers
 admin = __import__("admin")
 
 app = Flask(__name__)
@@ -42,22 +41,6 @@ def authentication_required():
 def admin_authentication_required():
     return render_template('admin-authentication-required.html')
 # Session Error/Exploit Prevention END
-
-# Host Header Injection Handling START
-# @app.route('/route')
-# def route():
-#     content_type = request.args["Content-Type"]
-#     allowed_content_types = r'application/ (pdf|json|xml)'
-#     response = Response()
-#     headers = Headers()
-#     if re.match(allowed_content_types, content_type): # compliant
-#         headers.add("Content-Type", content_type)
-#     else:
-#         headers.add("Content-Type", "application/json")
-#     response.headers = headers
-#     return response
-# Host Heaeder Injection Handling END
-
 
 # Error 404 Handling START
 @app.errorhandler(404)
@@ -787,30 +770,26 @@ def checkout():
         publicKey, privateKey = rsa.newkeys(512) # define the key length when generated
         encrypted_card_name = rsa.encrypt((create_order_form.card_name.data).encode(), publicKey)
         encrypted_card_no = rsa.encrypt((create_order_form.card_no.data).encode(), publicKey)
-        encrypted_expMonth = rsa.encrypt((create_order_form.expmonth.data).encode(), publicKey)
-        encrypted_expYear = rsa.encrypt((create_order_form.expyear.data).encode(), publicKey)
+        encrypted_expmonth = rsa.encrypt((create_order_form.expmonth.data).encode(), publicKey)
+        encrypted_expyear = rsa.encrypt((create_order_form.expyear.data).encode(), publicKey)
         encrypted_CVV = rsa.encrypt((create_order_form.cvv.data).encode(), publicKey)
-
-        # orders = Order.Order(create_order_form.address.data, 
-        #                     create_order_form.postal_code.data,
-        #                     encrypted_card_name,
-        #                     encrypted_card_no,
-        #                     encrypted_expMonth,
-        #                     encrypted_expYear, 
-        #                     encrypted_CVV)
 
         orders = Order.Order(create_order_form.address.data, 
                             create_order_form.postal_code.data,
-                            create_order_form.card_name,
-                            create_order_form.card_no,
-                            create_order_form.expMonth,
-                            create_order_form.expYear, 
-                            create_order_form.cvv)
+                            encrypted_card_name,
+                            encrypted_card_no,
+                            encrypted_expmonth,
+                            encrypted_expyear, 
+                            encrypted_CVV)
 
-        
-        orders_dict[orders.get_order_id()] = orders
-        db['Orders'] = orders_dict
-
+        # orders = Order.Order(create_order_form.address.data, 
+        #                     create_order_form.postal_code.data,
+        #                     create_order_form.card_name,
+        #                     create_order_form.card_no,
+        #                     create_order_form.expmonth,
+        #                     create_order_form.expyear, 
+        #                     create_order_form.cvv)
+                
         # Test Codes
         orders_dict = db['Orders']
         orders = orders_dict[orders.get_order_id()]
@@ -829,7 +808,6 @@ def checkout():
 @app.route('/order-confirmation')
 def order_confirmation():
     orders_dict = {}
-    publicKey, privateKey = rsa.newkeys(512)
     try:
         db = shelve.open('orders.db', 'r')
         orders_dict = db['Orders']
@@ -849,7 +827,7 @@ def order_confirmation():
 # Order History START
 @app.route('/retrieveOrder')
 def retrieve_order():
-    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+    if ((session['logged_in'] == False) or (session['logged_in'] == True)) and (session['logged_in_admin'] == False):
         return render_template('admin-authentication-required.html')
     else:
         orders_dict = {}
@@ -892,7 +870,7 @@ def delete_order(id):
 # Retrieve Sell Cars START
 @app.route('/retrieveSellCars')
 def retrieve_sellcars():
-    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+    if ((session['logged_in'] == False) or (session['logged_in'] == True)) and (session['logged_in_admin'] == False):
         return render_template('admin-authentication-required.html')
     else:
         sellcars_dict = {}
@@ -915,63 +893,68 @@ def retrieve_sellcars():
 # Update Sell Cars START
 @app.route('/updateSellCars/<int:id>/', methods=['GET', 'POST'])
 def update_sellcars(id):
-
-    update_sellcars = CreateSellCarForm(request.form)
-    if request.method == 'POST' and update_sellcars.validate():
-        db = shelve.open('sellcar.db', 'w')
-        sellcars_dict = db['Sellcars']
-
-        sellcar = sellcars_dict.get(id)
-        sellcar.set_car_brand(update_sellcars.car_brand.data)
-        sellcar.set_car_model(update_sellcars.car_model.data)
-        sellcar.set_car_brand(update_sellcars.car_price.data)
-        sellcar.set_condition(update_sellcars.condition.data)
-        sellcar.set_remarks(update_sellcars.remarks.data)
-
-        db['Sellcars'] = sellcars_dict
-        db.close()
-
-        return redirect(url_for('retrieve_sellcars'))
-
+    if ((session['logged_in'] == False) or (session['logged_in'] == True)) and (session['logged_in_admin'] == False):
+        return render_template('authentication-required.html')
     else:
-        sellcars_dict = {}
-        db = shelve.open('sellcar.db', 'r')
-        sellcars_dict = db['Sellcars']
-        db.close()
+        update_sellcars = CreateSellCarForm(request.form)
+        if request.method == 'POST' and update_sellcars.validate():
+            db = shelve.open('sellcar.db', 'w')
+            sellcars_dict = db['Sellcars']
 
-        sellcar = sellcars_dict.get(id)
-        update_sellcars.car_brand.data = sellcar.get_car_brand()
-        update_sellcars.car_model.data = sellcar.get_car_model()
-        update_sellcars.car_brand.data = sellcar.get_car_price()
-        update_sellcars.condition.data = sellcar.get_condition()
-        update_sellcars.car_remarks = sellcar.get_remarks()
+            sellcar = sellcars_dict.get(id)
+            sellcar.set_car_brand(update_sellcars.car_brand.data)
+            sellcar.set_car_model(update_sellcars.car_model.data)
+            sellcar.set_car_brand(update_sellcars.car_price.data)
+            sellcar.set_condition(update_sellcars.condition.data)
+            sellcar.set_remarks(update_sellcars.remarks.data)
 
-        return render_template('updateSellCars.html', form=update_sellcars)
+            db['Sellcars'] = sellcars_dict
+            db.close()
+
+            return redirect(url_for('retrieve_sellcars'))
+
+        else:
+            sellcars_dict = {}
+            db = shelve.open('sellcar.db', 'r')
+            sellcars_dict = db['Sellcars']
+            db.close()
+
+            sellcar = sellcars_dict.get(id)
+            update_sellcars.car_brand.data = sellcar.get_car_brand()
+            update_sellcars.car_model.data = sellcar.get_car_model()
+            update_sellcars.car_brand.data = sellcar.get_car_price()
+            update_sellcars.condition.data = sellcar.get_condition()
+            update_sellcars.car_remarks = sellcar.get_remarks()
+
+            return render_template('updateSellCars.html', form=update_sellcars)
 # Update Sell Cars END
 
 # Delete Sell Cars START
 @app.route('/deleteSellCars/<int:id>', methods=['POST'])
 def delete_sellcar(id):
-    sellcars_dict = {}
-    db = shelve.open('sellcar.db', 'w')
-    try:
-        sellcars_dict = db['Sellcars']
-    except:
-        print("Error in retrieving Sellcars from sellcar.db.")
+    if ((session['logged_in'] == False) or (session['logged_in'] == True)) and (session['logged_in_admin'] == False):
+        return render_template('authentication-required.html')
+    else:
+        sellcars_dict = {}
+        db = shelve.open('sellcar.db', 'w')
+        try:
+            sellcars_dict = db['Sellcars']
+        except:
+            print("Error in retrieving Sellcars from sellcar.db.")
 
-    sellcars_dict.pop(id)
+        sellcars_dict.pop(id)
 
-    db['Sellcars'] = sellcars_dict
-    db.close()
+        db['Sellcars'] = sellcars_dict
+        db.close()
 
-    return redirect(url_for('retrieve_sellcars'))
+        return redirect(url_for('retrieve_sellcars'))
 # Delete Sell Cars END
 
 
 # Car Page START
 @app.route('/createCar', methods=['GET', 'POST'])
 def create_car():
-    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+    if ((session['logged_in'] == False) or (session['logged_in'] == True)) and (session['logged_in_admin'] == False):
         return render_template('authentication-required.html')
     else:
         create_car_form = CreateCarsForm(request.form)
@@ -1014,7 +997,7 @@ def create_car():
 # Admin Retrieve Cars START
 @app.route('/adminRetrieveCars')
 def admin_retrieve_cars():
-    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+    if ((session['logged_in'] == False) or (session['logged_in'] == True)) and (session['logged_in_admin'] == False):
         return render_template('admin-authentication-required.html')
     else:
         create_cars_dict = {}
@@ -1034,7 +1017,7 @@ def admin_retrieve_cars():
 # Update create cars start
 @app.route('/adminUpdateCars/<int:id>/', methods=['GET', 'POST'])
 def update_cars(id):
-    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+    if ((session['logged_in'] == False) or (session['logged_in'] == True)) and (session['logged_in_admin'] == False):
         return render_template('admin-authentication-required.html')
     else:
         update_cars = CreateCarsForm(request.form)
@@ -1071,7 +1054,7 @@ def update_cars(id):
 # Delete create Cars START
 @app.route('/deleteCars/<int:id>', methods=['POST'])
 def delete_car(id):
-    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+    if ((session['logged_in'] == False) or (session['logged_in'] == True)) and (session['logged_in_admin'] == False):
         return render_template('admin-authentication-required.html')
     else:
         Create_cars_dict = {}
@@ -1101,7 +1084,7 @@ def admin_dashboard():
 
 @app.route('/dashboard')
 def sales():
-    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+    if ((session['logged_in'] == False) or (session['logged_in'] == True)) and (session['logged_in_admin'] == False):
         return render_template('admin-authentication-required.html')
     else:
         orders_dict = {}
@@ -1125,7 +1108,7 @@ def sales():
 # Sales Order Deletion START
 @app.route('/deleteOrderAdmin/<int:id>', methods=['POST'])
 def delete_order_admin(id):
-    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+    if ((session['logged_in'] == False) or (session['logged_in'] == True)) and (session['logged_in_admin'] == False):
         return render_template('admin-authentication-required.html')
     else:
         orders_dict = {}
