@@ -1,4 +1,6 @@
+from sys import unraisablehook
 from flask import Flask, render_template, request, redirect, url_for, flash, session
+from numpy import unravel_index
 from User import User
 from Forms import CreateThread, CreateUserForm, CreateSellCarForm, LoginForm, CreateOrderForm, CreateAnnouncement, CreateCarsForm
 import shelve, User, Thread, sellcar, Order, Announcement, Cars, bcrypt, rsa, re
@@ -211,6 +213,8 @@ def create_user():
     create_user_form = CreateUserForm(request.form)  # what is this again?
     if request.method == 'POST' and create_user_form.validate():
         users_dict = {}
+        regex = re.compile("[$&+,:;=?@#|'<>.-^*()%!]")
+        regex2 = re.compile("[$&+,:;=?#|'<>.-^*()%!]")        
         db = shelve.open('users.db', 'c')  # check, scan dict for existing
 
         try:
@@ -218,18 +222,45 @@ def create_user():
         except:
             print("Error in retrieving Users from 'user.db'.")  # pop-up error
         username = create_user_form.username.data
+        fullName = create_user_form.full_name.data
+        password = create_user_form.password.data
+        confirm_password = create_user_form.confirm_password.data
+        mobile = create_user_form.mobile_no.data
+        email = create_user_form.email.data
+        postal_code = create_user_form.postal_code.data
+        address = create_user_form.address.data        
         if users_dict:
             for key in users_dict:
                 content = users_dict[key]
-                if username == content.get_username():
-                    flash('Username is already taken.', category='error')
+                # when the user information is already in database
+                if username == content.get_username() or fullName == content.get_full_name() or mobile == content.get_mobile_no() or email == content.get_email() or postal_code == content.get_postal_code() or address == content.get_address():
+                    flash("User information already registered. Please register new information.", category='error')
                     return redirect(url_for('create_user'))
+                # when username already taken
+                elif username == content.get_username():
+                    flash("Username already taken.", category='error')
+                    return redirect(url_for('create_user'))                
+                else:
+                    # when the input has special characters
+                    if re.findall(regex, username) or re.findall(regex, fullName) or re.findall(regex, mobile) or re.findall(regex2, email) or re.findall(regex, postal_code) or re.findall(regex, address) or re.findall(regex, password) or re.findall(regex, confirm_password):
+                        flash("No special characters for input fields allowed.", category='error')                    
+                        return redirect(url_for('create_user')) 
+                # when there are no special characters and the username already exists      
             else:
+                # check if input have special character
+                if re.findall(regex, username) or re.findall(regex, fullName) or re.findall(regex, mobile) or re.findall(regex2, email) or re.findall(regex, postal_code) or re.findall(regex, address) or re.findall(regex, password) or re.findall(regex, confirm_password):
+                    flash("No special characters for input fields allowed.", category='error')                    
+                    return redirect(url_for('create_user'))
+                # when either of the inputs match the data in the database 
+                else:     
+                    if username == content.get_username() or fullName == content.get_full_name() or mobile == content.get_mobile_no() or email == content.get_email() or postal_code == content.get_postal_code() or address == content.get_address():
+                        flash("User Information already registered. Please enter different information.", category='error')  
+                        return redirect(url_for('create_user'))
+
                 # generate hash for password and confirm_password
                 # encode password
                 password = create_user_form.password.data
-                confirm_password = create_user_form.confirm_password.data
-                
+                confirm_password = create_user_form.confirm_password.data                
                 hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())                
                 password = hashed_pw
                 confirm_password = hashed_pw
@@ -266,11 +297,11 @@ def create_user():
 
 
         else:
+
             # generate hash for password and confirm_password
             # encode password
             password_hash = create_user_form.password.data
-            confirm_password_hash = create_user_form.confirm_password.data
-            
+            confirm_password_hash = create_user_form.confirm_password.data            
             hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())                
             password = hashed_pw
             confirm_password = hashed_pw # confirm password and password must have the same digest
