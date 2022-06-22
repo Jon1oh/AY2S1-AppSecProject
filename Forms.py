@@ -19,7 +19,7 @@ class CreateAnnouncement(Form):
 
 
 class CreateUserForm(Form):
-    full_name = StringField('Name:', [validators.Length(min=1, max=150), validators.DataRequired()])
+    full_name = StringField('Full Name:', [validators.Length(min=1, max=150), validators.DataRequired()])
     gender = SelectField('Gender', [validators.DataRequired()], choices=[('', 'Select'), ('M', 'Male'), ('F', 'Female')], default='')
     email = EmailField('Email:', [validators.Email(), validators.DataRequired()])
     mobile_no = StringField('Mobile Number (+65):', [validators.Length(min=8, max=8), validators.DataRequired()])
