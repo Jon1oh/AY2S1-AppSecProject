@@ -1,6 +1,4 @@
-from sys import unraisablehook
 from flask import Flask, render_template, request, redirect, url_for, flash, session
-from numpy import unravel_index
 from User import User
 from Forms import CreateThread, CreateUserForm, CreateSellCarForm, LoginForm, CreateOrderForm, CreateAnnouncement, CreateCarsForm
 import shelve, User, Thread, sellcar, Order, Announcement, Cars, bcrypt, rsa, re
@@ -214,7 +212,6 @@ def create_user():
     if request.method == 'POST' and create_user_form.validate():
         users_dict = {}
         regex = re.compile("[$&+,:;=?@#|'<>.-^*()%!]")
-        regex2 = re.compile("[$&+,:;=?#|'<>.-^*()%!]")        
         db = shelve.open('users.db', 'c')  # check, scan dict for existing
 
         try:
@@ -229,6 +226,7 @@ def create_user():
         email = create_user_form.email.data
         postal_code = create_user_form.postal_code.data
         address = create_user_form.address.data        
+
         if users_dict:
             for key in users_dict:
                 content = users_dict[key]
@@ -239,16 +237,16 @@ def create_user():
                 # when username already taken
                 elif username == content.get_username():
                     flash("Username already taken.", category='error')
-                    return redirect(url_for('create_user'))                
+                    return redirect(url_for('create_user'))
                 else:
                     # when the input has special characters
-                    if re.findall(regex, username) or re.findall(regex, fullName) or re.findall(regex, mobile) or re.findall(regex2, email) or re.findall(regex, postal_code) or re.findall(regex, address) or re.findall(regex, password) or re.findall(regex, confirm_password):
+                    if re.findall(regex, username) or re.findall(regex, fullName) or re.findall(regex, mobile) or re.findall(regex, email) or re.findall(regex, postal_code) or re.findall(regex, address) or re.findall(regex, password) or re.findall(regex, confirm_password):
                         flash("No special characters for input fields allowed.", category='error')                    
                         return redirect(url_for('create_user')) 
-                # when there are no special characters and the username already exists      
+
             else:
                 # check if input have special character
-                if re.findall(regex, username) or re.findall(regex, fullName) or re.findall(regex, mobile) or re.findall(regex2, email) or re.findall(regex, postal_code) or re.findall(regex, address) or re.findall(regex, password) or re.findall(regex, confirm_password):
+                if re.findall(regex, username) or re.findall(regex, fullName) or re.findall(regex, mobile) or re.findall(regex, email) or re.findall(regex, postal_code) or re.findall(regex, address) or re.findall(regex, password) or re.findall(regex, confirm_password):
                     flash("No special characters for input fields allowed.", category='error')                    
                     return redirect(url_for('create_user'))
                 # when either of the inputs match the data in the database 
@@ -256,11 +254,11 @@ def create_user():
                     if username == content.get_username() or fullName == content.get_full_name() or mobile == content.get_mobile_no() or email == content.get_email() or postal_code == content.get_postal_code() or address == content.get_address():
                         flash("User Information already registered. Please enter different information.", category='error')  
                         return redirect(url_for('create_user'))
-
+                
                 # generate hash for password and confirm_password
-                # encode password
                 password = create_user_form.password.data
-                confirm_password = create_user_form.confirm_password.data                
+                confirm_password = create_user_form.confirm_password.data
+                
                 hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())                
                 password = hashed_pw
                 confirm_password = hashed_pw
@@ -297,11 +295,11 @@ def create_user():
 
 
         else:
-
             # generate hash for password and confirm_password
             # encode password
             password_hash = create_user_form.password.data
-            confirm_password_hash = create_user_form.confirm_password.data            
+            confirm_password_hash = create_user_form.confirm_password.data
+            
             hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())                
             password = hashed_pw
             confirm_password = hashed_pw # confirm password and password must have the same digest
@@ -826,10 +824,6 @@ def checkout():
         orders = orders_dict[orders.get_order_id()]
         print(orders.get_card_name(), "was stored in 'orders.db' successfully with order_id ==", orders.get_order_id())
         db.close()
-        for key, value in orders_dict.items():
-            print(f"key is {key}")
-            print(f"{key}:\naddress:{value.get_address()}\npostal code:{value.get_postal_code()}\ncard_name:{value.get_card_name()}\ncard_no:{value.get_card_no()}\nexpMonth:{value.get_expmonth()},\nexpYear:{value.get_expyear()}\ncvv:{value.get_cvv()}\n")
-
         return redirect(url_for('order_confirmation'))
     return render_template('checkout.html', form=create_order_form)
 # Product Purchase END
