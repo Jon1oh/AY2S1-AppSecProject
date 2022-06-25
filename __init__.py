@@ -88,7 +88,6 @@ def login():
         if request.method == "POST" and login_form.validate():
             username = login_form.username.data            
             password = login_form.password.data
-            regex = re.compile("[$&+,:;=?@#|'<>.-^*()%!]")
             db = shelve.open('users.db', 'r')
             db_content = db['Users']
             for key in db_content:
@@ -96,9 +95,6 @@ def login():
                 print(content)
                 if username == content.get_username():
                     print("Username exist")
-                    # check if password has special characters
-                    if re.findall(regex, password):
-                        flash("Incorrect username or password", category='error')
                     # this compares the digest of the password (when regiester for account) with the digest of the
                     # password input
                     if bcrypt.checkpw(password.encode(), content.get_password()):
@@ -211,7 +207,7 @@ def create_user():
     create_user_form = CreateUserForm(request.form)  # what is this again?
     if request.method == 'POST' and create_user_form.validate():
         users_dict = {}
-        regex = re.compile("[$&+,:;=?@#|'<>.-^*()%!]")
+        regex = r'[^A-Za-z0-9]+'    
         db = shelve.open('users.db', 'c')  # check, scan dict for existing
 
         try:
@@ -247,13 +243,14 @@ def create_user():
             else:
                 # check if input have special character
                 if re.findall(regex, username) or re.findall(regex, fullName) or re.findall(regex, mobile) or re.findall(regex, email) or re.findall(regex, postal_code) or re.findall(regex, address) or re.findall(regex, password) or re.findall(regex, confirm_password):
-                    flash("No special characters for input fields allowed.", category='error')                    
-                    return redirect(url_for('create_user'))
-                # when either of the inputs match the data in the database 
-                else:     
                     if username == content.get_username() or fullName == content.get_full_name() or mobile == content.get_mobile_no() or email == content.get_email() or postal_code == content.get_postal_code() or address == content.get_address():
                         flash("User Information already registered. Please enter different information.", category='error')  
                         return redirect(url_for('create_user'))
+                        
+                # when either of the inputs match the data in the database 
+                else:     
+                    flash("No special characters for input fields allowed.", category='error')                    
+                    return redirect(url_for('create_user'))
                 
                 # generate hash for password and confirm_password
                 password = create_user_form.password.data
@@ -552,36 +549,51 @@ def create_thread():
         create_thread_form = CreateThread(request.form)
         if request.method == 'POST' and create_thread_form.validate():
             threads_dict = {}
+            regex = r'[^A-Za-z0-9\s]+[.,!]'    
             db = shelve.open('threads.db', 'c')
 
             try:
                 threads_dict = db['Threads']
             except:
                 print("Error in retrieving Threads from 'threads.db'.")
+            thread_username = create_thread_form.thread_username.data
+            thread_title = create_thread_form.thread_title.data
+            thread_message = create_thread_form.thread_message.data
+            thread_reply = create_thread_form.thread_reply.data
+            
+            print(re.findall(regex, thread_username))
+            print(re.findall(regex, thread_title))
+            print(re.findall(regex, thread_message))
+            
+            # check if thread inputs have special characters
+            if re.findall(regex, thread_username) or re.findall(regex, thread_title) or re.findall(regex, thread_message):
+                print("Special chracters found in created thread")
+                flash("No special characters allowed for input fields.", category='error')  
+                return render_template('thread-creation.html', form=create_thread_form)
+            else:
+                threads = Thread.Thread(thread_username, thread_title, thread_message, thread_reply)
 
-            threads = Thread.Thread(create_thread_form.thread_username.data, create_thread_form.thread_title.data, create_thread_form.thread_message.data, create_thread_form.thread_reply.data)
+                count_id = 0
 
-            count_id = 0
-
-            try:
-                for key in threads_dict:
-                    count_id = key
+                try:
+                    for key in threads_dict:
+                        count_id = key
+                        count_id += 1
+                        threads.set_thread_id(count_id)
+                except:
                     count_id += 1
                     threads.set_thread_id(count_id)
-            except:
-                count_id += 1
-                threads.set_thread_id(count_id)
 
-            threads_dict[threads.get_thread_id()] = threads
-            db['Threads'] = threads_dict
+                threads_dict[threads.get_thread_id()] = threads
+                db['Threads'] = threads_dict
 
-            # Thread Creation Program Recording Code START
-            threads_dict = db['Threads']
-            threads = threads_dict[threads.get_thread_id()]
-            print(threads.get_thread_title(), "was stored in 'threads.db' successfully with thread_id ==", threads.get_thread_id())
-            # Thread Creation Program Recording Code END
+                # Thread Creation Program Recording Code START
+                threads_dict = db['Threads']
+                threads = threads_dict[threads.get_thread_id()]
+                print(threads.get_thread_title(), "was stored in 'threads.db' successfully with thread_id ==", threads.get_thread_id())
+                # Thread Creation Program Recording Code END
 
-            db.close()
+                db.close()
 
             return redirect(url_for('support_forum'))
         return render_template('thread-creation.html', form=create_thread_form)
@@ -725,14 +737,22 @@ def create_announcement():
         create_announcement_form = CreateAnnouncement(request.form)
         if request.method == 'POST' and create_announcement_form.validate():
             announcements_dict = {}
+            regex = re.compile("[$&+,:;=?@#|'<>.-^*()%!]")
             db = shelve.open('announcements.db', 'c')
 
             try:
                 announcements_dict = db['Announcements']
             except:
                 print("Error in retrieving Announcements from 'announcements.db'.")
-
-            announcements = Announcement.Announcement(create_announcement_form.thread_username.data, create_announcement_form.thread_title.data, create_announcement_form.thread_message.data, create_announcement_form.thread_reply.data, create_announcement_form.announcement_type.data, create_announcement_form.severity_level.data)
+            thread_username = create_announcement_form.thread_username.data
+            thread_title = create_announcement_form.thread_title.data
+            thread_message = create_announcement_form.thread_message.data
+            thread_reply = create_announcement_form.thread_reply.data
+            announcement_type = create_announcement_form.announcement_type.data
+            severity_level = create_announcement_form.severity_level.data
+            
+            # check for special characters
+            announcements = Announcement.Announcement(thread_username, thread_title, thread_message, thread_reply, announcement_type, severity_level)
 
             count_id = 0
 
@@ -753,7 +773,7 @@ def create_announcement():
             announcements = announcements_dict[announcements.get_announcement_id()]
             print(announcements.get_thread_title(), "was stored in 'announcements.db' successfully with announcement_id ==", announcements.get_announcement_id())
             # Announcement Creation Program Recording Code END
-
+                
             db.close()
 
             return redirect(url_for('support_forum'))
@@ -784,48 +804,71 @@ def delete_announcement(id):
 @app.route('/checkout', methods=['GET', 'POST'])
 @login_required
 def checkout():
-    create_order_form = CreateOrderForm(request.form)
-    if request.method == 'POST' and create_order_form.validate():
-        orders_dict = {}
-        db = shelve.open('orders.db', 'c')
+    if (session['logged_in'] == True) or (session['logged_in_admin'] == True):
+        create_order_form = CreateOrderForm(request.form)
+        if request.method == 'POST' and create_order_form.validate():
+            orders_dict = {}
+            regex = r'[^A-Za-z0-9]+'    
+            regex2 = r'[^A-Za-z0-9\s]+' 
+            db = shelve.open('orders.db', 'c')
 
-        try:
-            orders_dict = db['Orders']
-        except:
-            print("Error in retrieving Orders from 'orders.db'.")
-        
-        # encrypt the card_name, card_no, expmonth, expyear, cvv
-        # encrypt the data with rsa
-        publicKey, privateKey = rsa.newkeys(512) # define the key length when generated
-        encrypted_card_name = rsa.encrypt((create_order_form.card_name.data).encode(), publicKey)
-        encrypted_card_no = rsa.encrypt((create_order_form.card_no.data).encode(), publicKey)
-        encrypted_expmonth = rsa.encrypt((create_order_form.expmonth.data).encode(), publicKey)
-        encrypted_expyear = rsa.encrypt((create_order_form.expyear.data).encode(), publicKey)
-        encrypted_CVV = rsa.encrypt((create_order_form.cvv.data).encode(), publicKey)
+            try:
+                orders_dict = db['Orders']
+            except:
+                print("Error in retrieving Orders from 'orders.db'.")
+            address = create_order_form.address.data
+            postal_code = create_order_form.postal_code.data
+            card_name = create_order_form.card_name.data
+            card_no = create_order_form.card_no.data
+            expmonth = create_order_form.expmonth.data
+            expyear = create_order_form.expyear.data
+            cvv = create_order_form.cvv.data
+            
+            print(re.findall(regex, address))
+            print(re.findall(regex, postal_code))
+            print(re.findall(regex, card_name))
+            print(re.findall(regex, card_no))
+            print(re.findall(regex, expmonth))
+            print(re.findall(regex, expyear))
+            print(re.findall(regex, cvv))
 
-        orders = Order.Order(create_order_form.address.data, 
-                            create_order_form.postal_code.data,
-                            encrypted_card_name,
-                            encrypted_card_no,
-                            encrypted_expmonth,
-                            encrypted_expyear, 
-                            encrypted_CVV)
-
-        # orders = Order.Order(create_order_form.address.data, 
-        #                     create_order_form.postal_code.data,
-        #                     create_order_form.card_name,
-        #                     create_order_form.card_no,
-        #                     create_order_form.expmonth,
-        #                     create_order_form.expyear, 
-        #                     create_order_form.cvv)
+            # check if input has special character
+            if re.findall(regex2, address) or re.findall(regex, postal_code) or re.findall(regex2, card_name) or re.findall(regex, card_no) or re.findall(regex, expmonth) or re.findall(regex, expyear) or re.findall(regex, cvv):
+                print("Special characters found in order inputs.")
+                flash("No special characters allowed in input fields.", category='error')
+                return render_template('checkout.html', form=create_order_form)
                 
-        # Test Codes
-        orders_dict = db['Orders']
-        orders = orders_dict[orders.get_order_id()]
-        print(orders.get_card_name(), "was stored in 'orders.db' successfully with order_id ==", orders.get_order_id())
-        db.close()
-        return redirect(url_for('order_confirmation'))
-    return render_template('checkout.html', form=create_order_form)
+            else:
+                # hash the data inputs
+                card_no_digest = bcrypt.hashpw(card_no.encode(), bcrypt.gensalt())
+                expmonth_digest = bcrypt.hashpw(expmonth.encode(), bcrypt.gensalt())
+                expyear_digest = bcrypt.hashpw(expyear.encode(), bcrypt.gensalt())
+                cvv_digest = bcrypt.hashpw(cvv.encode(), bcrypt.gensalt())
+
+                orders = db['Orders']
+                orders = Order.Order(address, postal_code, card_name, card_no_digest, expmonth_digest, expyear_digest,  cvv_digest)
+                
+                count_id = 0
+
+                try:
+                    for key in orders_dict:
+                        count_id = key
+                        count_id += 1
+                        orders_dict.set_order_id(count_id)
+                except:
+                    count_id += 1
+                    orders_dict.set_order_id(count_id)
+                
+                # orders_dict[orders.get_order_id()] = orders
+                # db['Orders'] = orders_dict
+                        
+                # Test Codes
+                # orders = orders_dict[orders.get_order_id()]
+                print(orders.get_card_name(), "was stored in 'orders.db' successfully with order_id ==", orders.get_order_id())
+                db.close()
+
+            return redirect(url_for('order_confirmation'))
+        return render_template('checkout.html', form=create_order_form)
 # Product Purchase END
 
 
@@ -841,6 +884,7 @@ def order_confirmation():
         print("Error in retrieving Orders from 'orders.db'.")
     
     orders_list = []
+    print(orders_dict)
     for key in orders_dict:
         orders = orders_dict.get(key)
         orders_list.append(orders)
