@@ -172,7 +172,7 @@ def update_admin(id):
             user.set_username(update_user_form.username.data)
             user.set_password(update_user_form.password.data)
             user.set_confirm_password(update_user_form.confirm_password.data)
-            
+
             db['Users'] = users_dict
             db.close()
 
@@ -241,35 +241,13 @@ def create_user():
                         return redirect(url_for('create_user')) 
 
             else:
-                # check if input have special character
-                if re.findall(regex, username) or re.findall(regex, fullName) or re.findall(regex, mobile) or re.findall(regex, email) or re.findall(regex, postal_code) or re.findall(regex, address) or re.findall(regex, password) or re.findall(regex, confirm_password):
-                    if username == content.get_username() or fullName == content.get_full_name() or mobile == content.get_mobile_no() or email == content.get_email() or postal_code == content.get_postal_code() or address == content.get_address():
-                        flash("User Information already registered. Please enter different information.", category='error')  
-                        return redirect(url_for('create_user'))
-                        
-                # when either of the inputs match the data in the database 
-                else:     
-                    flash("No special characters for input fields allowed.", category='error')                    
-                    return redirect(url_for('create_user'))
-                
-                # generate hash for password and confirm_password
-                password = create_user_form.password.data
-                confirm_password = create_user_form.confirm_password.data
-                
-                hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())                
-                password = hashed_pw
-                confirm_password = hashed_pw
+                users = User.User(create_user_form.full_name.data, create_user_form.gender.data,
+                                  create_user_form.email.data,
+                                  create_user_form.mobile_no.data, create_user_form.address.data,
+                                  create_user_form.postal_code.data, create_user_form.username.data,
+                                  create_user_form.password.data, create_user_form.confirm_password.data,
+                                  create_user_form.member.data)
 
-                users = User.User(create_user_form.full_name.data,
-                                create_user_form.gender.data,
-                                create_user_form.email.data,
-                                create_user_form.mobile_no.data,
-                                create_user_form.address.data,
-                                create_user_form.postal_code.data,
-                                create_user_form.username.data,
-                                password, 
-                                confirm_password,
-                                create_user_form.member.data)
                 count_id = 0
 
                 try:
@@ -292,26 +270,13 @@ def create_user():
 
 
         else:
-            # generate hash for password and confirm_password
-            # encode password
-            password_hash = create_user_form.password.data
-            confirm_password_hash = create_user_form.confirm_password.data
-            
-            hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())                
-            password = hashed_pw
-            confirm_password = hashed_pw # confirm password and password must have the same digest
+            users = User.User(create_user_form.full_name.data, create_user_form.gender.data,
+                              create_user_form.email.data,
+                              create_user_form.mobile_no.data, create_user_form.address.data,
+                              create_user_form.postal_code.data, create_user_form.username.data,
+                              create_user_form.password.data, create_user_form.confirm_password.data,
+                              create_user_form.member.data)
 
-            users = User.User(create_user_form.full_name.data,
-                            create_user_form.gender.data,
-                            create_user_form.email.data,
-                            create_user_form.mobile_no.data,
-                            create_user_form.address.data,
-                            create_user_form.postal_code.data,
-                            create_user_form.username.data,
-                            password_hash, 
-                            confirm_password_hash,
-                            create_user_form.member.data)                       
-                        
             count_id = 0
 
             try:
@@ -366,6 +331,7 @@ def update_user(id):
             db = shelve.open('users.db', 'w')
             users_dict = db['Users']
 
+            user = users_dict.get(id)
             user.set_full_name(update_user_form.full_name.data)
             user.set_gender(update_user_form.gender.data)
             user.set_email(update_user_form.email.data)

@@ -23,6 +23,9 @@ class User(UserMixin):
     def get_member(self):
         return self.__member
 
+    def set_member(self, member):
+        self.__member = member
+
     def get_user_id(self):
         return self.__user_id
 
@@ -80,9 +83,6 @@ class User(UserMixin):
 
     def set_password(self, password):
         self.__password = password
-
-    def set_member(self, member):
-        self.__member = member
 
     def set_confirm_password(self, confirm_password):
         self.__confirm_password = confirm_password
