@@ -868,25 +868,32 @@ def checkout():
                 orders = Order.Order(address, postal_code, card_name, card_no_digest, expmonth_digest, expyear_digest, cvv_digest)
                 
                 count_id = 0
+        try:
+            orders_dict = db['Orders']
+        except:
+            print("Error in retrieving Orders from 'orders.db'.")
 
-                try:
-                    for key in orders_dict:
-                        count_id = key
-                        count_id += 1
-                        orders_dict.set_order_id(count_id)
-                except:
-                    count_id += 1
-                    orders_dict.set_order_id(count_id)
-                
-                # orders = orders_dict[orders.get_order_id()]
-                orders_dict[orders.get_order_id()] = orders
-                db['Orders'] = orders_dict                    
-                
-                print(orders.get_card_name(), "was stored in 'orders.db' successfully with order_id ==", orders.get_order_id())
-                db.close()
+        orders = Order.Order(create_order_form.address.data, create_order_form.postal_code.data, create_order_form.card_name.data, create_order_form.card_no.data, create_order_form.expmonth.data, create_order_form.expyear.data, create_order_form.cvv.data)
+        orders_dict[orders.get_order_id()] = orders
+        db['Orders'] = orders_dict
+        try:
+            for key in orders_dict:
+                count_id = key
+                count_id += 1
+                orders_dict.set_order_id(count_id)
+        except:
+            count_id += 1
+            orders_dict.set_order_id(count_id)
+        
+        # orders = orders_dict[orders.get_order_id()]
+        orders_dict[orders.get_order_id()] = orders
+        db['Orders'] = orders_dict                    
+        
+        print(orders.get_card_name(), "was stored in 'orders.db' successfully with order_id ==", orders.get_order_id())
+        db.close()
 
-            return redirect(url_for('order_confirmation'))
-        return render_template('checkout.html', form=create_order_form)
+        return redirect(url_for('order_confirmation'))
+    return render_template('checkout.html', form=create_order_form)
 # Product Purchase END
 
 
