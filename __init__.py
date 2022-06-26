@@ -438,53 +438,34 @@ def sell_your_car():
     sell_car_form = CreateSellCarForm(request.form)
     if request.method == 'POST' and sell_car_form.validate():
         sellcars_dict = {}
-        regex = r'[^A-Za-z0-9.,!\s]+'    
         db = shelve.open('sellcar.db', 'c')
 
         try:
             sellcars_dict = db['Sellcars']
         except:
             print("Error in retrieving Sellcars from sellcar.db.")
-        car_model = sell_car_form.car_model.data
-        car_brand = sell_car_form.car_brand.data
-        car_price = sell_car_form.car_price.data
-        condition = sell_car_form.condition.data
-        remarks = sell_car_form.remarks.data
 
-        print(re.findall(regex, car_model))
-        print(re.findall(regex, car_brand))
-        print(re.findall(regex, car_price))
-        print(re.findall(regex, condition))
-        print(re.findall(regex, remarks))
+        Sellcar = sellcar.Sellcar(sell_car_form.car_model.data, sell_car_form.car_brand.data, sell_car_form.car_price.data, sell_car_form.condition.data, sell_car_form.remarks.data)
 
-        if re.findall(regex, car_model) or re.findall(regex, car_brand) or re.findall(regex, car_price) or re.findall(regex, car_price) or re.findall(regex, condition) or re.findall(regex, remarks):
-            print("Special characters found in Sell-Car form")
-            flash("No special chracters allowed in input fields.", category='error')
-            return render_template('sell-your-car.html', form=sell_car_form)
-            
-        else:
-            print("No special chacters found in sell car input")
-            Sellcar = sellcar.Sellcar(car_model, car_brand, car_price, condition, remarks)
-
-            count_id = 0
-            try:
-                for key in sellcars_dict:
-                    count_id = key
-                    count_id += 1
-                    Sellcar.set_sellcar_id(count_id)
-            except:
+        count_id = 0
+        try:
+            for key in sellcars_dict:
+                count_id = key
                 count_id += 1
-                Sellcar.set_sellcar_id
+                Sellcar.set_sellcar_id(count_id)
+        except:
+            count_id += 1
+            Sellcar.set_sellcar_id
 
-            sellcars_dict[Sellcar.get_sellcar_id()] = Sellcar
-            db['Sellcars'] = sellcars_dict
+        sellcars_dict[Sellcar.get_sellcar_id()] = Sellcar
+        db['Sellcars'] = sellcars_dict
 
-            # Test codes
-            sellcars_dict = db['Sellcars']
-            Sellcar = sellcars_dict[Sellcar.get_sellcar_id()]
-            print(Sellcar.get_car_model(), Sellcar.get_car_brand(), "was stored in sellcar.db successfully with sellcar_id ==", Sellcar.get_sellcar_id())
+        # Test codes
+        sellcars_dict = db['Sellcars']
+        Sellcar = sellcars_dict[Sellcar.get_sellcar_id()]
+        print(Sellcar.get_car_model(), Sellcar.get_car_brand(), "was stored in sellcar.db successfully with sellcar_id ==", Sellcar.get_sellcar_id())
 
-            db.close()
+        db.close()
 
         return redirect(url_for('browse_listings'))
     return render_template('sell-your-car.html', form=sell_car_form)
@@ -534,7 +515,7 @@ def create_thread():
         create_thread_form = CreateThread(request.form)
         if request.method == 'POST' and create_thread_form.validate():
             threads_dict = {}
-            regex = r'[^A-Za-z0-9.,!\s]+'    
+            regex = r'[^A-Za-z0-9\s]+[.,!]'    
             db = shelve.open('threads.db', 'c')
 
             try:
@@ -830,33 +811,27 @@ def checkout():
                 expyear_digest = bcrypt.hashpw(expyear.encode(), bcrypt.gensalt())
                 cvv_digest = bcrypt.hashpw(cvv.encode(), bcrypt.gensalt())
 
-                orders_dict = db['Orders']
-                orders = Order.Order(address, postal_code, card_name, card_no_digest, expmonth_digest, expyear_digest, cvv_digest)
+                orders = db['Orders']
+                orders = Order.Order(address, postal_code, card_name, card_no_digest, expmonth_digest, expyear_digest,  cvv_digest)
                 
                 count_id = 0
-        try:
-            orders_dict = db['Orders']
-        except:
-            print("Error in retrieving Orders from 'orders.db'.")
 
-        orders = Order.Order(create_order_form.address.data, create_order_form.postal_code.data, create_order_form.card_name.data, create_order_form.card_no.data, create_order_form.expmonth.data, create_order_form.expyear.data, create_order_form.cvv.data)
-        orders_dict[orders.get_order_id()] = orders
-        db['Orders'] = orders_dict
-        try:
-            for key in orders_dict:
-                count_id = key
-                count_id += 1
-                orders_dict.set_order_id(count_id)
-        except:
-            count_id += 1
-            orders_dict.set_order_id(count_id)
-        
-        # orders = orders_dict[orders.get_order_id()]
-        orders_dict[orders.get_order_id()] = orders
-        db['Orders'] = orders_dict                    
-        
-        print(orders.get_card_name(), "was stored in 'orders.db' successfully with order_id ==", orders.get_order_id())
-        db.close()
+                try:
+                    for key in orders_dict:
+                        count_id = key
+                        count_id += 1
+                        orders_dict.set_order_id(count_id)
+                except:
+                    count_id += 1
+                    orders_dict.set_order_id(count_id)
+                
+                orders_dict[orders.get_order_id()] = orders
+                db['Orders'] = orders_dict
+                        
+                # Test Codes
+                orders = orders_dict[orders.get_order_id()]
+                print(orders.get_card_name(), "was stored in 'orders.db' successfully with order_id ==", orders.get_order_id())
+                db.close()
 
         return redirect(url_for('order_confirmation'))
     return render_template('checkout.html', form=create_order_form)
