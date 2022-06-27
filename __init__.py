@@ -95,7 +95,7 @@ def login():
                 print(content.get_username())
                 if username == content.get_username():
                     print("Username exist")
-                    # this compares the digest of the password (when regiester for account) with the digest of the
+                    # this compares the digest of the password (when register for account) with the digest of the
                     # password input
                     if bcrypt.checkpw(password.encode(), content.get_password()):
                         print("digest matches!")
