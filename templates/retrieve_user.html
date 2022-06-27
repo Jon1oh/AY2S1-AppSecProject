@@ -54,26 +54,15 @@
 
     <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
       <div class="panel-body">
-
-
-
-                  <form id="form" class="topBefore">
-
-            <input id="name" type="text" placeholder="NAME">
-            <input id="email" type="text" placeholder="E-MAIL">
-            <textarea id="message" type="text" placeholder="MESSAGE"></textarea>
-            <input id="submit" type="submit" value="Submit Now!">
-
-          </form>
-
-
-
-
-
-
+        <form id="form" class="topBefore" autocomplete="off">
+          <input id="name" type="text" placeholder="NAME">
+          <input id="email" type="text" placeholder="E-MAIL">
+          <textarea id="message" type="text" placeholder="MESSAGE"></textarea>
+          <input id="submit" type="submit" value="Submit Now!">
+        </form>
       </div>
     </div>
   </div>
 </div>
-      {% endfor %}
-      {% endblock %}
+{% endfor %}
+{% endblock %}

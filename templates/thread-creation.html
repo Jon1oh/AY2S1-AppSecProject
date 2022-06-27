@@ -5,7 +5,7 @@
 {% from "includes/_formHelper.html" import render_field %}
 <h1 class="fw-bold text-center mb-3">Create Support Thread</h1>
 
-<form method="POST" action="">
+<form method="POST" action="" autocomplete="off">
     <div class="text-left">
         <div class="mb-3 mx-auto" style="max-width: 750px;">
             {{ render_field(form.thread_username, class="form-control") }}
