@@ -56,7 +56,6 @@ class CreateSellCarForm(Form):
 
 
 class CreateOrderForm(Form):
-    address = StringField('Address:', [validators.Length(min=1, max=200), validators.DataRequired()])
     postal_code = StringField('Postal Code:', [validators.Length(min=6, max=6), validators.DataRequired()])
     card_name = StringField('Name on Card:', [validators.Length(min=1, max=200), validators.DataRequired()])
     card_no = StringField('Card Number:', [validators.Length(min=16, max=16), validators.DataRequired()])
@@ -67,4 +66,4 @@ class CreateOrderForm(Form):
 class CreateCarsForm(Form):
     car_model = StringField('Car Model', [validators.Length(min=1, max=150), validators.DataRequired()])
     car_brand = SelectField('Car Brand', choices=[('', 'Select'), ('Audi', 'Audi'), ('BMW', 'BMW'), ('Tesla', 'Tesla')], default='')
-    car_price = StringField('Car price (SGD___,___)', [validators.Length(min=1, max=150), validators.DataRequired()])
+    car_price = StringField('Car price (SGD($))', [validators.Length(min=1, max=150), validators.DataRequired()])
