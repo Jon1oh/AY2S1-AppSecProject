@@ -1,4 +1,3 @@
-from contextlib import redirect_stdout
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from User import User
 from Forms import CreateThread, CreateUserForm, CreateSellCarForm, LoginForm, CreateOrderForm, CreateAnnouncement, CreateCarsForm
@@ -84,7 +83,7 @@ def home():
 # Login/Logout Function START
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if (session['logged_in'] == False) or (session['logged_in_admin'] == False):
+    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
         login_form = LoginForm(request.form)
         if request.method == "POST" and login_form.validate():
             username = login_form.username.data            
@@ -95,7 +94,7 @@ def login():
                 content = db_content[key]
                 print(content.get_username())
                 if username == content.get_username():
-                    print("Username exists")
+                    print("Username exist")
                     # this compares the digest of the password (when register for account) with the digest of the
                     # password input
                     if bcrypt.checkpw(password.encode(), content.get_password()):
@@ -118,6 +117,7 @@ def login():
     else:
         return redirect(url_for('home'))
 
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -132,7 +132,7 @@ def logout():
 # Account Management START
 @app.route('/retrieve_admin', methods=['GET', 'POST'])
 def retrieve_admin():
-    if (session['logged_in_admin'] == False):
+    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
         return render_template('admin-authentication-required.html')
     else:    
         try:
@@ -176,7 +176,6 @@ def update_admin(id):
             db['Users'] = users_dict
             db.close()
 
-            # return redirect(url_for('retrieve_admin'))
             return render_template('updateUser.html', form=update_user_form)        
         except:
             print("Error")
@@ -197,8 +196,7 @@ def update_admin(id):
             update_user_form.username.data = user.get_username()
             update_user_form.password.data = user.get_password()
             update_user_form.confirm_password.data = user.get_confirm_password()
-            
-            # return redirect(url_for('retrieve_admin'))
+
             return render_template('updateUser.html', form=update_user_form)
         except:
             print("Error")
@@ -477,6 +475,7 @@ def sell_your_car():
 def support_forum():
     # Announcements START
     announcements_dict = {}
+
     try:
         db = shelve.open('announcements.db', 'r')
         announcements_dict = db['Announcements']
@@ -532,7 +531,7 @@ def create_thread():
             
             # check if thread inputs have special characters
             if re.findall(regex, thread_username) or re.findall(regex, thread_title) or re.findall(regex, thread_message):
-                print("Special characters found in created thread")
+                print("Special chracters found in created thread")
                 flash("No special characters allowed for input fields.", category='error')  
                 return render_template('thread-creation.html', form=create_thread_form)
             else:
@@ -715,13 +714,14 @@ def create_announcement():
             thread_reply = create_announcement_form.thread_reply.data
             announcement_type = create_announcement_form.announcement_type.data
             severity_level = create_announcement_form.severity_level.data
-            
+
             # check for special characters
             if re.findall(regex, thread_username) or re.findall(regex, thread_title) or re.findall(regex, thread_message) or re.findall(regex, thread_reply) or re.findall(regex, announcement_type) or re.findall(regex, severity_level):
                 print("Special characters found in announcements")                
                 flash("No special characters allowed in input fields.")
                 return redirect(url_for('support_forum'))
             else:
+            
                 announcements = Announcement.Announcement(thread_username, thread_title, thread_message, thread_reply, announcement_type, severity_level)
 
                 count_id = 0
@@ -778,7 +778,6 @@ def checkout():
         create_order_form = CreateOrderForm(request.form)
         if request.method == 'POST' and create_order_form.validate():
             orders_dict = {}
-            users_dict = {}
             regex = r'[^A-Za-z0-9]+'    
             regex2 = r'[^A-Za-z0-9\s]+' 
             db = shelve.open('orders.db', 'c')
@@ -810,35 +809,6 @@ def checkout():
                 return render_template('checkout.html', form=create_order_form)
                 
             else:
-                # open users database and check if data matches/found in database                
-                try:
-                    users_db = shelve.open('users.db', 'r')
-                    users_dict = users_db['Users']
-                    users_db.close()
-                except:
-                    print("Error in retrieving Users from 'users.db'.")
-                # check if address equals to registered address for that customer
-                for key, value in users_dict.items():
-                    # if card name found in database, get the the user id for that customer.
-                    # check if input matches data inside database. Otherwise, user input is invalid.
-                    if card_name == value.get_full_name():
-                        # key ==> user id, value ==> user object
-                        # check if the other input field data matches those in database.
-                        # ALL data values must match the data in the datbase to be considered valid
-                        if address == value.get_address() and postal_code == value.get_postal_code() and card_name == value.get_full_name():
-                            print("user credentials match!")
-                            # if user credentials match, hash credit card credentials and check if match in database.
-                        else:
-                            print("user credentials don't match!")
-                            flash("Incorrect user credentials!", category='error')
-                            return render_template('checkout.html', form=create_order_form)
-                    else:
-                        print("Invalid username in order-confirmation form")
-                        flash("Username not registered.", category='error')
-                        return render_template('checkout.html', form=create_order_form)
-
-                                        
-
                 # hash the data inputs
                 card_no_digest = bcrypt.hashpw(card_no.encode(), bcrypt.gensalt())
                 expmonth_digest = bcrypt.hashpw(expmonth.encode(), bcrypt.gensalt())
@@ -913,7 +883,7 @@ def retrieve_order():
         for key in orders_dict:
             orders = orders_dict.get(key)
             orders_list.append(orders)
-        print(orders_list)
+
         return render_template('retrieveOrder.html', count=len(orders_list), orders_list=orders_list[::-1])
 # Order History END
 
@@ -939,7 +909,7 @@ def delete_order(id):
 # Retrieve Sell Cars START
 @app.route('/retrieveSellCars')
 def retrieve_sellcars():
-    if (session['logged_in_admin'] == False):
+    if ((session['logged_in'] == False) or (session['logged_in'] == True)) and (session['logged_in_admin'] == False):
         return render_template('admin-authentication-required.html')
     else:
         sellcars_dict = {}
@@ -1050,28 +1020,28 @@ def create_car():
             else:
                 print(re.findall(regex, carModel), re.findall(regex, carPrice))
                 Createcar = Cars.Cars(carModel, carBrand, carPrice)
-
-                count_id = 0
-                try:
-                    for key in create_cars_dict:
-                        count_id = key
-                        count_id += 1
-                        Createcar.set_car_id(count_id)
-                except:
+            count_id = 0
+            
+            try:
+                for key in create_cars_dict:
+                    count_id = key
                     count_id += 1
-                    Createcar.set_car_id
+                    Createcar.set_car_id(count_id)
+            except:
+                count_id += 1
+                Createcar.set_car_id
 
-                create_cars_dict[Createcar.get_car_id()] = Createcar
-                db['Createcars'] = create_cars_dict
+            create_cars_dict[Createcar.get_car_id()] = Createcar
+            db['Createcars'] = create_cars_dict
 
-                # Test codes
-                create_cars_dict = db['Createcars']
-                Createcar = create_cars_dict[Createcar.get_car_id()]
-                print(Createcar.get_car_model(), Createcar.get_car_brand(), "was stored in sellcar.db successfully with sellcar_id ==", Createcar.get_car_id())
+            # Test codes
+            create_cars_dict = db['Createcars']
+            Createcar = create_cars_dict[Createcar.get_car_id()]
+            print(Createcar.get_car_model(), Createcar.get_car_brand(), "was stored in sellcar.db successfully with sellcar_id ==", Createcar.get_car_id())
 
-                db.close()
-                
-                return redirect(url_for('admin_dashboard'))
+            db.close()
+
+            return redirect(url_for('admin_dashboard'))
         return render_template('createCar.html', form=create_car_form)
 # Car Page END
 
@@ -1162,6 +1132,7 @@ def admin_dashboard():
         return render_template('admin-dashboard.html')
     else:
         return redirect(url_for('admin_authentication_required'))
+
 
 @app.route('/dashboard')
 def sales():

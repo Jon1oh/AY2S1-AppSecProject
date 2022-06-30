@@ -67,4 +67,4 @@ class CreateOrderForm(Form):
 class CreateCarsForm(Form):
     car_model = StringField('Car Model', [validators.Length(min=1, max=150), validators.DataRequired()])
     car_brand = SelectField('Car Brand', choices=[('', 'Select'), ('Audi', 'Audi'), ('BMW', 'BMW'), ('Tesla', 'Tesla')], default='')
-    car_price = StringField('Car price (SGD($))', [validators.Length(min=1, max=150), validators.DataRequired()])
+    car_price = StringField('Car price (SGD___,___)', [validators.Length(min=1, max=150), validators.DataRequired()])
