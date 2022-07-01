@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from User import User
-from Forms import CreateThread, CreateUserForm, CreateSellCarForm, LoginForm, CreateOrderForm, CreateAnnouncement, CreateCarsForm
+from Forms import CreateThread, CreateUserForm, CreateAdminForm, CreateSellCarForm, LoginForm, CreateOrderForm, CreateAnnouncement, CreateCarsForm
 import shelve, User, Thread, sellcar, Order, Announcement, Cars, bcrypt, re
 from flask_login import login_user, login_required, logout_user, LoginManager
 admin = __import__("admin")
@@ -132,7 +132,7 @@ def logout():
 # Account Management START
 @app.route('/retrieve_admin', methods=['GET', 'POST'])
 def retrieve_admin():
-    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+    if (session['logged_in_admin'] == False):
         return render_template('admin-authentication-required.html')
     else:    
         try:
@@ -155,51 +155,85 @@ def retrieve_admin():
 
 @app.route('/updateAdmin/<int:id>/', methods=['GET', 'POST'])  # exception
 def update_admin(id):
-    update_user_form = CreateUserForm(request.form)
+    update_user_form = CreateAdminForm(request.form)
     if request.method == 'POST' and update_user_form.validate():
+        regex = r'[^A-Za-z0-9]+'        
+        regex2 = r'[^A-Za-z0-9\s]+[@.]'        
         try:
             users_dict = {}
             db = shelve.open('users.db', 'w')
             users_dict = db['Users']
-
-            user = users_dict.get(id)
-            user.set_full_name(update_user_form.full_name.data)
-            user.set_gender(update_user_form.gender.data)
-            user.set_email(update_user_form.email.data)
-            user.set_mobile_no(update_user_form.mobile_no.data)
-            user.set_address(update_user_form.address.data)
-            user.set_postal_code(update_user_form.postal_code.data)
-            user.set_username(update_user_form.username.data)
-            user.set_password(update_user_form.password.data)
-            user.set_confirm_password(update_user_form.confirm_password.data)
-
-            db['Users'] = users_dict
-            db.close()
-
-            return render_template('updateUser.html', form=update_user_form)        
         except:
             print("Error")
+
+        update_full_name = update_user_form.full_name.data
+        update_gender = update_user_form.gender.data
+        update_email = update_user_form.email.data
+        update_mobile_no = update_user_form.mobile_no.data
+        update_username = update_user_form.username.data
+        update_password = update_user_form.password.data
+        update_confirm_password = update_user_form.confirm_password.data
+
+        if users_dict:
+            for key in users_dict:
+                content = users_dict[key]
+                # when username already taken
+                if update_username == content.get_username():
+                    flash("Username already taken.", category='error')
+                    return render_template('updateUser.html', form=update_user_form)
+                # when the input has special characters
+                if re.findall(regex, update_username) or re.findall(regex2, update_full_name) or re.findall(regex, update_mobile_no) or re.findall(regex2, update_email) or re.findall(regex, update_password) or re.findall(regex, update_confirm_password):
+                    print("special characters found in update admin information form")                    
+                    flash("No special characters for input fields allowed.", category='error')                    
+                    return render_template('updateUser.html', form=update_user_form)
+            else:
+                update_password_digest = bcrypt.hashpw(update_password.encode(), bcrypt.gensalt())
+                update_confirm_password_digest = bcrypt.hashpw(update_confirm_password.encode(), bcrypt.gensalt())
+                update_password_digest = update_confirm_password_digest
+
+                user = users_dict.get(id)
+                user.set_full_name(update_full_name)
+                user.set_gender(update_gender)
+                user.set_email(update_email)
+                user.set_mobile_no(update_mobile_no)            
+                user.set_username(update_username)
+                user.set_password(update_password_digest)
+                user.set_confirm_password(update_confirm_password_digest)
+
+                db['Users'] = users_dict
+                db.close()
+                print("Admin information updated.")
+                flash("Admin information successfully updated!", category='success')
+
+            return redirect(url_for('retrieve_admin'))                
+            # return render_template('updateUser.html', form=update_user_form)        
     else:
         try:
             users_dict = {}
             db = shelve.open('users.db', 'r')
             users_dict = db['Users']
-            db.close()
-
-            user = users_dict.get(id)
-            update_user_form.full_name.data = user.get_full_name()
-            update_user_form.email.data = user.get_email()
-            update_user_form.gender.data = user.get_gender()
-            update_user_form.address.data = user.get_address()
-            update_user_form.mobile_no = user.get_mobile_no()
-            update_user_form.postal_code.data = user.get_postal_code()
-            update_user_form.username.data = user.get_username()
-            update_user_form.password.data = user.get_password()
-            update_user_form.confirm_password.data = user.get_confirm_password()
-
-            return render_template('updateUser.html', form=update_user_form)
         except:
             print("Error")
+
+            update_password_digest = bcrypt.hashpw(update_password.encode(), bcrypt.gensalt())
+            update_confirm_password_digest = bcrypt.hashpw(update_confirm_password.encode(), bcrypt.gensalt())
+            update_password_digest = update_confirm_password_digest
+
+            user = users_dict.get(id)
+            user.set_full_name(update_full_name)
+            user.set_gender(update_gender)
+            user.set_email(update_email)
+            user.set_mobile_no(update_mobile_no)            
+            user.set_username(update_username)
+            user.set_password(update_password_digest)
+            user.set_confirm_password(update_confirm_password_digest)
+
+            db['Users'] = users_dict
+            db.close()
+            flash("Admin information successfully updated!", category='success')
+            # return render_template('updateUser.html', form=update_user_form)
+            return redirect(url_for('retrieve_admin'))
+    return render_template('updateAdmin.html', form=update_user_form)
 
 
 @app.route('/account-creation', methods=['GET', 'POST'])
@@ -207,7 +241,7 @@ def create_user():
     create_user_form = CreateUserForm(request.form)  # what is this again?
     if request.method == 'POST' and create_user_form.validate():
         users_dict = {}
-        regex = r'[^A-Za-z0-9]+'    
+        regex = r'[^A-Za-z0-9]+'         
         db = shelve.open('users.db', 'c')  # check, scan dict for existing
 
         try:
@@ -222,14 +256,13 @@ def create_user():
         gender = create_user_form.gender.data
         email = create_user_form.email.data
         postal_code = create_user_form.postal_code.data
-        address = create_user_form.address.data
         member = create_user_form.member.data        
 
         if users_dict:
             for key in users_dict:
                 content = users_dict[key]
                 # when the user information is already in database
-                if username == content.get_username() or fullName == content.get_full_name() or mobile == content.get_mobile_no() or email == content.get_email() or postal_code == content.get_postal_code() or address == content.get_address():
+                if username == content.get_username() or fullName == content.get_full_name() or mobile == content.get_mobile_no() or email == content.get_email() or postal_code == content.get_postal_code():
                     flash("User information already registered. Please register new information.", category='error')
                     return redirect(url_for('create_user'))
                 # when username already taken
@@ -238,7 +271,7 @@ def create_user():
                     return redirect(url_for('create_user'))
                 # when the input has special characters
                 else:
-                    if bool(re.findall(regex, username) or re.findall(regex, fullName) or re.findall(regex, mobile) or re.findall(regex, email) or re.findall(regex, postal_code) or re.findall(regex, address) or re.findall(regex, password) or re.findall(regex, confirm_password)) == False:
+                    if bool(re.findall(regex, username) or re.findall(regex, fullName) or re.findall(regex, mobile) or re.findall(regex, email) or re.findall(regex, postal_code) or re.findall(regex, password) or re.findall(regex, confirm_password)) == False:
                         flash("No special characters for input fields allowed.", category='error')                    
                         return redirect(url_for('create_user')) 
 
@@ -246,7 +279,7 @@ def create_user():
                 password_digest = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
                 confirm_password_digest = bcrypt.hashpw(confirm_password.encode(), bcrypt.gensalt())
                 password_digest = confirm_password_digest
-                users = User.User(fullName, gender, email, mobile, address, postal_code, username, password_digest, confirm_password_digest, member)
+                users = User.User(fullName, gender, email, mobile, postal_code, username, password_digest, confirm_password_digest, member)
 
                 count_id = 0
 
@@ -273,7 +306,7 @@ def create_user():
             password_digest = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
             confirm_password_digest = bcrypt.hashpw(confirm_password.encode(), bcrypt.gensalt())
             password_digest = confirm_password_digest
-            users = User.User(fullName, gender, email, mobile, address, postal_code, username, password_digest, confirm_password_digest, member)
+            users = User.User(fullName, gender, email, mobile, postal_code, username, password_digest, confirm_password_digest, member)
 
             count_id = 0
 
@@ -324,51 +357,92 @@ def retrieve_users():
 def update_user(id):
     update_user_form = CreateUserForm(request.form)
     if request.method == 'POST' and update_user_form.validate():
+        regex = r'[^A-Za-z0-9]+'         
+        regex2 = r'[^A-Za-z0-9\s]+[@.]'         
         try:
             users_dict = {}
             db = shelve.open('users.db', 'w')
             users_dict = db['Users']
-
-            user = users_dict.get(id)
-            user.set_full_name(update_user_form.full_name.data)
-            user.set_gender(update_user_form.gender.data)
-            user.set_email(update_user_form.email.data)
-            user.set_mobile_no(update_user_form.mobile_no.data)
-            user.set_address(update_user_form.address.data)
-            user.set_postal_code(update_user_form.postal_code.data)
-            user.set_username(update_user_form.username.data)
-            user.set_password(update_user_form.password.data)
-            user.set_confirm_password(update_user_form.confirm_password.data)
-
-            db['Users'] = users_dict
-            db.close()
-
-            return redirect(url_for('retrieve_users'))
         except:
             print("Error")
+
+        update_full_name = update_user_form.full_name.data
+        update_gender = update_user_form.gender.data
+        update_email = update_user_form.email.data
+        update_mobile_no = update_user_form.mobile_no.data
+        update_username = update_user_form.username.data
+        update_password = update_user_form.password.data
+        update_confirm_password = update_user_form.confirm_password.data
+
+        if users_dict:
+            for key in users_dict:
+                content = users_dict[key]
+                # when username already taken
+                if update_username == content.get_username():
+                    flash("Username already taken.", category='error')
+                    return render_template('updateUser.html', form=update_user_form)
+                # when the input has special characters
+                if re.findall(regex, update_username) or re.findall(regex2, update_full_name) or re.findall(regex, update_mobile_no) or re.findall(regex2, update_email) or re.findall(regex, update_password) or re.findall(regex, update_confirm_password):
+                    print(re.findall(regex, update_username))
+                    print(re.findall(regex, update_full_name))
+                    print(re.findall(regex, update_mobile_no))
+                    print(re.findall(regex, update_email))
+                    print(re.findall(regex, update_password))
+                    print(re.findall(regex, update_confirm_password))
+
+                    print("special characters found in update user information form")
+                    flash("No special characters for input fields allowed.", category='error')                    
+                    return render_template('updateUser.html', form=update_user_form)
+                    
+            else:
+                update_password_digest = bcrypt.hashpw(update_password.encode(), bcrypt.gensalt())
+                update_confirm_password_digest = bcrypt.hashpw(update_confirm_password.encode(), bcrypt.gensalt())
+                update_password_digest = update_confirm_password_digest
+
+                user = users_dict.get(id)
+                user.set_full_name(update_full_name)
+                user.set_gender(update_gender)
+                user.set_email(update_email)
+                user.set_mobile_no(update_mobile_no)            
+                user.set_username(update_username)
+                user.set_password(update_password_digest)
+                user.set_confirm_password(update_confirm_password_digest)
+
+                db['Users'] = users_dict
+                db.close()
+                print("User information updated.")
+                flash("User information successfully updated!", category='success')
+            
+            return redirect(url_for('retrieve_admin'))
+
+            # return render_template('updateUser.html', form=update_user_form)        
     else:
         try:
             users_dict = {}
             db = shelve.open('users.db', 'r')
             users_dict = db['Users']
-            db.close()
-
-            user = users_dict.get(id)
-            update_user_form.full_name.data = user.get_full_name()
-            update_user_form.email.data = user.get_email()
-            update_user_form.gender.data = user.get_gender()
-            update_user_form.address.data = user.get_address()
-            update_user_form.mobile_no.data = user.get_mobile_no()
-            update_user_form.mobile_no.data = user.get_mobile_no()
-            update_user_form.postal_code.data = user.get_postal_code()
-            update_user_form.username.data = user.get_username()
-            update_user_form.password.data = user.get_password()
-            update_user_form.confirm_password.data = user.get_confirm_password()
-
-            return render_template('updateUser.html', form=update_user_form)
         except:
             print("Error")
 
+            update_password_digest = bcrypt.hashpw(update_password.encode(), bcrypt.gensalt())
+            update_confirm_password_digest = bcrypt.hashpw(update_confirm_password.encode(), bcrypt.gensalt())
+            update_password_digest = update_confirm_password_digest
+
+            user = users_dict.get(id)
+            user.set_full_name(update_full_name)
+            user.set_gender(update_gender)
+            user.set_email(update_email)
+            user.set_mobile_no(update_mobile_no)            
+            user.set_username(update_username)
+            user.set_password(update_password_digest)
+            user.set_confirm_password(update_confirm_password_digest)
+
+            db['Users'] = users_dict
+            db.close()
+            flash("User information successfully updated!", category='success')
+            # return render_template('updateUser.html', form=update_user_form)
+            return redirect(url_for('retrieve_admin'))
+    return render_template('updateUser.html', form=update_user_form)        
 
 @app.route('/deleteUser/<int:id>', methods=['POST']) # exception
 def delete_user(id):
@@ -381,8 +455,8 @@ def delete_user(id):
 
         db['Users'] = users_dict
         db.close()
-
-        return redirect(url_for('retrieve_users'))
+    
+        return redirect(url_for('retrieve_admin'))
     except:
         print("Error")
 # Account Management END
@@ -779,14 +853,13 @@ def checkout():
         if request.method == 'POST' and create_order_form.validate():
             orders_dict = {}
             regex = r'[^A-Za-z0-9]+'    
-            regex2 = r'[^A-Za-z0-9\s]+' 
+            regex2 = r'[^A-Za-z0-9\s]+[.,!]' 
             db = shelve.open('orders.db', 'c')
 
             try:
                 orders_dict = db['Orders']
             except:
                 print("Error in retrieving Orders from 'orders.db'.")
-            address = create_order_form.address.data
             postal_code = create_order_form.postal_code.data
             card_name = create_order_form.card_name.data
             card_no = create_order_form.card_no.data
@@ -794,16 +867,8 @@ def checkout():
             expyear = create_order_form.expyear.data
             cvv = create_order_form.cvv.data
             
-            # print(re.findall(regex, address))
-            # print(re.findall(regex, postal_code))
-            # print(re.findall(regex, card_name))
-            # print(re.findall(regex, card_no))
-            # print(re.findall(regex, expmonth))
-            # print(re.findall(regex, expyear))
-            # print(re.findall(regex, cvv))
-
             # check if input has special character
-            if re.findall(regex2, address) or re.findall(regex, postal_code) or re.findall(regex2, card_name) or re.findall(regex, card_no) or re.findall(regex, expmonth) or re.findall(regex, expyear) or re.findall(regex, cvv):
+            if re.findall(regex, postal_code) or re.findall(regex2, card_name) or re.findall(regex, card_no) or re.findall(regex, expmonth) or re.findall(regex, expyear) or re.findall(regex, cvv):
                 print("Special characters found in order inputs.")
                 flash("No special characters allowed in input fields.", category='error')
                 return render_template('checkout.html', form=create_order_form)
@@ -816,7 +881,7 @@ def checkout():
                 cvv_digest = bcrypt.hashpw(cvv.encode(), bcrypt.gensalt())
 
                 orders = db['Orders']
-                orders = Order.Order(address, postal_code, card_name, card_no_digest, expmonth_digest, expyear_digest,  cvv_digest)
+                orders = Order.Order(postal_code, card_name, card_no_digest, expmonth_digest, expyear_digest,  cvv_digest)
                 
                 count_id = 0
 
