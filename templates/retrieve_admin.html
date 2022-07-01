@@ -205,7 +205,6 @@ $(document).ready(function(){
                         <th>Role</th>
                         <th>Mobile</th>
                         <th>Postal Code</th>
-                        <th>Address</th>
                         <th>Email</th>
                         <th>Username</th>
 
@@ -220,16 +219,20 @@ $(document).ready(function(){
                         <td>{{ user.get_member() }}</td>
                         <td>{{ user.get_mobile_no() }}</td>
                         <td>{{ user.get_postal_code() }}</td>
-                        <td>{{ user.get_address() }}</td>
                         <td>{{ user.get_email() }}</td>
                         <td>{{ user.get_username() }}</td>
-
-
+                        
+                        {% if user.get_member() == "Admin" %}
                         <td>
                             <a href="/updateAdmin/{{user.get_user_id()}}" class="settings" title="Settings" data-toggle="tooltip"><i class="material-icons">&#xE8B8;</i></a>
                         </td>
+                        {% else %}
                         <td>
-                            <form action="{{url_for('delete_user', id=user.get_user_id())}}" method="POST">
+                            <a href="/updateUser/{{user.get_user_id()}}" class="settings" title="Settings" data-toggle="tooltip"><i class="material-icons">&#xE8B8;</i></a>
+                        </td>
+                        {% endif %}
+                        <td>
+                            <form action="{{url_for('delete_user', id=user.get_user_id())}}" method="POST" autocomplete="off">
         <!--  <input type="submit" value="Delete" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete {{user.get_full_name()}}?');"> -->
         <!-- Button to Open the Modal -->
           <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#myModal_{{user.get_user_id()}}">

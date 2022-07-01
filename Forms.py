@@ -19,26 +19,26 @@ class CreateAnnouncement(Form):
 
 
 class CreateUserForm(Form):
-    full_name = StringField('Full Name:', [validators.Length(min=1, max=150), validators.DataRequired()])
+    full_name = StringField('Full Name:', [validators.Length(min=1, max=50), validators.DataRequired()])
     gender = SelectField('Gender', [validators.DataRequired()], choices=[('', 'Select'), ('M', 'Male'), ('F', 'Female')], default='')
     email = EmailField('Email:', [validators.Email(), validators.DataRequired()])
     mobile_no = StringField('Mobile Number (+65):', [validators.Length(min=8, max=8), validators.DataRequired()])
-    address = StringField('Address:', [validators.DataRequired()])
     postal_code = StringField('Postal Code:', [validators.Length(min=6, max=6), validators.DataRequired()])
     username = StringField('Username:', [validators.Length(min=1, max=50), validators.DataRequired()])
-    password = PasswordField('Password:', [validators.Length(min=1, max=50), validators.DataRequired()])
-    confirm_password = PasswordField('Confirm Password:', [validators.Length(min=1, max=50), validators.DataRequired()])
+    password = PasswordField('Password:', [validators.Length(min=1, max=30), validators.DataRequired()])
+    confirm_password = PasswordField('Confirm Password:', [validators.Length(min=1, max=30), validators.DataRequired()])
     member = SelectField('Membership:', [validators.DataRequired()], choices=[('Member', 'Member')])
 
 
 class CreateAdminForm(Form):
-    full_name = StringField('Name:', [validators.Length(min=1, max=150), validators.DataRequired()])
+    full_name = StringField('Name:', [validators.Length(min=1, max=50), validators.DataRequired()])
     gender = SelectField('Gender', [validators.DataRequired()], choices=[('', 'Select'), ('M', 'Male'), ('F', 'Female')], default='')
     email = EmailField('Email:', [validators.Email(), validators.DataRequired()])
     mobile_no = StringField('Mobile Number (+65):', [validators.Length(min=8, max=8), validators.DataRequired()])
+    postal_code = StringField('Postal Code:', [validators.Length(min=6, max=6), validators.DataRequired()])
     username = StringField('Username:', [validators.Length(min=1, max=50), validators.DataRequired()])
-    password = PasswordField('Password:', [validators.Length(min=1, max=50), validators.DataRequired()])
-    confirm_password = PasswordField('Confirm Password:', [validators.Length(min=1, max=50), validators.DataRequired()])
+    password = PasswordField('Password:', [validators.Length(min=1, max=30), validators.DataRequired()])
+    confirm_password = PasswordField('Confirm Password:', [validators.Length(min=1, max=30), validators.DataRequired()])
     member = SelectField('Membership:', [validators.DataRequired()], choices=[('', 'Select'), ('Member', 'Member'), ('Admin', 'Admin')], default='')
 
 

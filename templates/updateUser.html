@@ -3,8 +3,8 @@
 
 {% block content %}
 {% from "includes/_formHelper.html" import render_field %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles/account.css') }}">
-<form method="POST" action="#">
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/account.css') }}">
+<form method="POST" action="#" autocomplete="off">
 <section>
   <div class="container py-5 h-100">
     <div class="row d-flex justify-content-center align-items-center h-100">
@@ -14,7 +14,7 @@
             <div class="row g-0">
               <div class="col-lg-6">
                 <div class="p-5">
-                  <h3 class="fw-normal mb-5" style="color: #4835d4;">User Information</h3>
+                  <h3 class="fw-normal mb-5" style="color: #4835d4;">Update User Information</h3>
 
                   <div class="mb-4 pb-2">
                    {{ render_field(form.gender, class="form-control") }}
@@ -48,7 +48,6 @@
                 <div class="p-5">
                   <h3 class="fw-normal mb-5">Contact Details</h3>
 
-
                   <div class="mb-4 pb-2">
                    {{ render_field(form.mobile_no, class="form-control") }}
                   </div>
@@ -61,9 +60,6 @@
                     {{ render_field(form.postal_code, class="form-control") }}
                   </div>
 
-                  <div class="mb-4 pb-2">
-                    {{ render_field(form.address, class="form-control") }}
-                  </div>
                   <div class="mb-4 pb-2">
                    <input type="submit" value="Update" class="btn btn-primary"/>
                   </div>
