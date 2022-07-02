@@ -1,4 +1,4 @@
-from wtforms import Form, StringField, TextAreaField, PasswordField, validators, SelectField, RadioField
+from wtforms import Form, StringField, IntegerField, TextAreaField, PasswordField, validators, SelectField
 from wtforms.fields import EmailField
 
 
@@ -50,7 +50,7 @@ class LoginForm(Form):
 class CreateSellCarForm(Form):
     car_model = StringField('Car Model:', [validators.Length(min=1, max=150), validators.DataRequired()])
     car_brand = SelectField('Car Brand:', [validators.DataRequired()], choices=[('', 'Select'), ('Audi', 'Audi'), ('BMW', 'BMW'), ('Tesla', 'Tesla')], default='')
-    car_price = StringField('Your Selling Price (in S$):', [validators.Length(min=1, max=150), validators.DataRequired()])
+    car_price = StringField('Your Selling Price (in SGD):', [validators.Length(min=1, max=150), validators.DataRequired()])
     condition = SelectField('Car Condition:', [validators.DataRequired()], choices=[('', 'Select'), ('Good', 'Good'), ('Fair', 'Fair'), ("Used", "Used")], default='')
     remarks = TextAreaField('Remarks:', [validators.Optional()], render_kw={"rows": 5})
 
@@ -66,4 +66,4 @@ class CreateOrderForm(Form):
 class CreateCarsForm(Form):
     car_model = StringField('Car Model', [validators.Length(min=1, max=150), validators.DataRequired()])
     car_brand = SelectField('Car Brand', choices=[('', 'Select'), ('Audi', 'Audi'), ('BMW', 'BMW'), ('Tesla', 'Tesla')], default='')
-    car_price = StringField('Car price (SGD($))', [validators.Length(min=1, max=150), validators.DataRequired()])
+    car_price = StringField('Car price (in SGD)', [validators.Length(min=1, max=150), validators.DataRequired()])
