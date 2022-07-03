@@ -1,10 +1,9 @@
 class Order:
     count_id=0
 
-    def __init__(self, address, postal_code, card_name, card_no, expmonth, expyear, cvv):
+    def __init__(self, postal_code, card_name, card_no, expmonth, expyear, cvv):
         Order.count_id += 1
         self.__order_id = Order.count_id
-        self.__address = address
         self.__postal_code = postal_code
         self.__card_name = card_name
         self.__card_no = card_no
@@ -14,9 +13,6 @@ class Order:
 
     def get_order_id(self):
         return self.__order_id
-
-    def get_address(self):
-        return self.__address
 
     def get_postal_code(self):
         return self.__postal_code
@@ -38,9 +34,6 @@ class Order:
 
     def set_order_id(self, order_id):
         self.__order_id = order_id
-
-    def set_address(self, address):
-        self.__address = address
 
     def set_postal_code(self, postal_code):
         self.__postal_code = postal_code

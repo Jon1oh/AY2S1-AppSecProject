@@ -54,6 +54,8 @@ def page_not_found(e):
 def about():
     if (session['logged_in'] == False):
         return render_template('authentication-required.html')
+    elif (session['logged_in_admin'] == False) and (session['logged_in'] == False):
+        return render_template('admin-authentication-required.html')
     else:
         try:
             users_dict = {}
@@ -83,7 +85,7 @@ def home():
 # Login/Logout Function START
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
+    if (session['logged_in'] == False) or (session['logged_in_admin'] == False):
         login_form = LoginForm(request.form)
         if request.method == "POST" and login_form.validate():
             username = login_form.username.data            
@@ -587,28 +589,28 @@ def create_thread():
         create_thread_form = CreateThread(request.form)
         if request.method == 'POST' and create_thread_form.validate():
             threads_dict = {}
-            regex = r'[^A-Za-z0-9\s]+[.,!]'    
+            users_dict = {}
+            regex = r'[^A-Za-z0-9\s.,!]+'    
+
+            thread_username = create_thread_form.thread_username.data
+            thread_title = create_thread_form.thread_title.data
+            thread_message = create_thread_form.thread_message.data
+            thread_reply = create_thread_form.thread_reply.data
+            
+            db = shelve.open('users.db', 'r')
+            users_dict = db['Users']
+
+            # check if username exists in database
+            
             db = shelve.open('threads.db', 'c')
 
             try:
                 threads_dict = db['Threads']
             except:
                 print("Error in retrieving Threads from 'threads.db'.")
-            thread_username = create_thread_form.thread_username.data
-            thread_title = create_thread_form.thread_title.data
-            thread_message = create_thread_form.thread_message.data
-            thread_reply = create_thread_form.thread_reply.data
-            
-            # print(re.findall(regex, thread_username))
-            # print(re.findall(regex, thread_title))
-            # print(re.findall(regex, thread_message))
             
             # check if thread inputs have special characters
-            if re.findall(regex, thread_username) or re.findall(regex, thread_title) or re.findall(regex, thread_message):
-                print("Special chracters found in created thread")
-                flash("No special characters allowed for input fields.", category='error')  
-                return render_template('thread-creation.html', form=create_thread_form)
-            else:
+            if re.findall(regex, thread_username) == [] and re.findall(regex, thread_title) == [] and re.findall(regex, thread_message):
                 threads = Thread.Thread(thread_username, thread_title, thread_message, thread_reply)
 
                 count_id = 0
@@ -632,6 +634,13 @@ def create_thread():
                 # Thread Creation Program Recording Code END
 
                 db.close()
+
+            else:
+                print(re.findall(regex, thread_username), re.findall(regex, thread_title), re.findall(regex, thread_message))
+                print("Special chracters found in created thread")
+                flash("No special characters allowed for input fields.", category='error')  
+                return render_template('thread-creation.html', form=create_thread_form)
+
 
             return redirect(url_for('support_forum'))
         return render_template('thread-creation.html', form=create_thread_form)
@@ -699,8 +708,8 @@ def update_thread(id):
     if session['logged_in_admin'] == True:
         update_thread_form = CreateThread(request.form)
         if request.method == "POST" and update_thread_form.validate():
+            regex = r'[^A-Za-z0-9\s.,!]+' 
             threads_dict = {}
-            print(threads_dict)
             db = shelve.open('threads.db', 'w')
 
             try:
@@ -708,22 +717,35 @@ def update_thread(id):
             except:
                 print("Error in retrieving Threads from 'threads.db'.")
 
-            try:
-                thread = threads_dict.get(id)
-                thread.set_thread_username(update_thread_form.thread_username.data)
-                thread.set_thread_title(update_thread_form.thread_title.data)
-                thread.set_thread_message(update_thread_form.thread_message.data)
-                thread.set_thread_reply(update_thread_form.thread_reply.data)
-            except:
-                thread = threads_dict.get(id)
-                thread.set_thread_username(update_thread_form.thread_username.data)
-                thread.set_thread_title(update_thread_form.thread_title.data)
-                thread.set_thread_message(update_thread_form.thread_message.data)
+            thread_username = update_thread_form.thread_username.data
+            thread_title = update_thread_form.thread_title.data
+            thread_message = update_thread_form.thread_message.data
+            thread_reply = update_thread_form.thread_reply.data
+            if re.findall(regex, thread_username) == [] and re.findall(regex, thread_title) == [] and re.findall(regex, thread_message) == [] and re.findall(regex, thread_reply) == []:
+                print(re.findall(regex, thread_username), re.findall(regex, thread_title), re.findall(regex, thread_message), re.findall(regex, thread_reply))                
+                print("No special characters found in update support thread form.")
 
-            db['Threads'] = threads_dict
-            db.close()
+                try:
+                    thread = threads_dict.get(id)
+                    thread.set_thread_username(thread_username)
+                    thread.set_thread_title(thread_title)
+                    thread.set_thread_message(thread_message)
+                    thread.set_thread_reply(thread_reply)
+                except:
+                    thread = threads_dict.get(id)
+                    thread.set_thread_username(thread_username)
+                    thread.set_thread_title(thread_title)
+                    thread.set_thread_message(thread_message)
 
-            return redirect(url_for('support_forum'))
+                db['Threads'] = threads_dict
+                db.close()
+
+                return redirect(url_for('support_forum'))
+            else:
+                print(re.findall(regex, thread_username), re.findall(regex, thread_title), re.findall(regex, thread_message), re.findall(regex, thread_reply))                
+                print("Special characters found in update support thread form.")
+                flash("No special chracters allowed in input fields!", category='error')
+                return render_template('update-thread.html', form=update_thread_form)
         else:
             threads_dict = {}
             db = shelve.open('threads.db', 'r')
@@ -775,7 +797,7 @@ def create_announcement():
         create_announcement_form = CreateAnnouncement(request.form)
         if request.method == 'POST' and create_announcement_form.validate():
             announcements_dict = {}
-            regex = r'[^A-Za-z0-9\s]+[.,!]' 
+            regex = r'[^A-Za-z0-9\s.,!]+' 
             db = shelve.open('announcements.db', 'c')
 
             try:
@@ -790,12 +812,7 @@ def create_announcement():
             severity_level = create_announcement_form.severity_level.data
 
             # check for special characters
-            if re.findall(regex, thread_username) or re.findall(regex, thread_title) or re.findall(regex, thread_message) or re.findall(regex, thread_reply) or re.findall(regex, announcement_type) or re.findall(regex, severity_level):
-                print("Special characters found in announcements")                
-                flash("No special characters allowed in input fields.")
-                return redirect(url_for('support_forum'))
-            else:
-            
+            if re.findall(regex, thread_username) == [] and re.findall(regex, thread_title) == [] and re.findall(regex, thread_message) == [] and re.findall(regex, thread_reply) == [] and re.findall(regex, announcement_type) == [] and re.findall(regex, severity_level):
                 announcements = Announcement.Announcement(thread_username, thread_title, thread_message, thread_reply, announcement_type, severity_level)
 
                 count_id = 0
@@ -820,6 +837,11 @@ def create_announcement():
                     
                 db.close()
 
+            else:
+                print("Special characters found in announcements")                
+                flash("No special characters allowed in input fields.")
+                return redirect(url_for('support_forum'))
+            
             return redirect(url_for('support_forum'))
         return render_template('announcement-creation.html', form=create_announcement_form)
     else:
@@ -853,13 +875,14 @@ def checkout():
         if request.method == 'POST' and create_order_form.validate():
             orders_dict = {}
             regex = r'[^A-Za-z0-9]+'    
-            regex2 = r'[^A-Za-z0-9\s]+[.,!]' 
-            db = shelve.open('orders.db', 'c')
+            regex2 = r'[^A-Za-z0-9\s]' 
 
+            db = shelve.open('orders.db', 'c')
             try:
-                orders_dict = db['Orders']
+                orders = db['Orders']
             except:
-                print("Error in retrieving Orders from 'orders.db'.")
+                print("Error retrieving orders from Order.py.")
+
             postal_code = create_order_form.postal_code.data
             card_name = create_order_form.card_name.data
             card_no = create_order_form.card_no.data
@@ -867,20 +890,15 @@ def checkout():
             expyear = create_order_form.expyear.data
             cvv = create_order_form.cvv.data
             
+            print(re.findall(regex, postal_code), re.findall(regex2, card_name), re.findall(regex, card_no), re.findall(regex, expmonth), re.findall(regex, str(expyear)),re.findall(regex, cvv))            
             # check if input has special character
-            if re.findall(regex, postal_code) or re.findall(regex2, card_name) or re.findall(regex, card_no) or re.findall(regex, expmonth) or re.findall(regex, expyear) or re.findall(regex, cvv):
-                print("Special characters found in order inputs.")
-                flash("No special characters allowed in input fields.", category='error')
-                return render_template('checkout.html', form=create_order_form)
-                
-            else:
+            if re.findall(regex, postal_code) == [] and  re.findall(regex2, card_name) == [] and re.findall(regex, card_no) == [] and re.findall(regex, expmonth) == [] and re.findall(regex, expyear) == [] and re.findall(regex, cvv) ==[]:
                 # hash the data inputs
                 card_no_digest = bcrypt.hashpw(card_no.encode(), bcrypt.gensalt())
                 expmonth_digest = bcrypt.hashpw(expmonth.encode(), bcrypt.gensalt())
                 expyear_digest = bcrypt.hashpw(expyear.encode(), bcrypt.gensalt())
-                cvv_digest = bcrypt.hashpw(cvv.encode(), bcrypt.gensalt())
+                cvv_digest = bcrypt.hashpw(cvv.encode(), bcrypt.gensalt())                    
 
-                orders = db['Orders']
                 orders = Order.Order(postal_code, card_name, card_no_digest, expmonth_digest, expyear_digest,  cvv_digest)
                 
                 count_id = 0
@@ -901,6 +919,11 @@ def checkout():
                 orders = orders_dict[orders.get_order_id()]
                 print(orders.get_card_name(), "was stored in 'orders.db' successfully with order_id ==", orders.get_order_id())
                 db.close()
+
+            else:
+                print("Special characters found in order inputs.")
+                flash("No special characters allowed in input fields.", category='error')
+                return render_template('checkout.html', form=create_order_form)
 
             return redirect(url_for('order_confirmation'))
     return render_template('checkout.html', form=create_order_form)
@@ -974,7 +997,7 @@ def delete_order(id):
 # Retrieve Sell Cars START
 @app.route('/retrieveSellCars')
 def retrieve_sellcars():
-    if ((session['logged_in'] == False) or (session['logged_in'] == True)) and (session['logged_in_admin'] == False):
+    if session['logged_in_admin'] == False:
         return render_template('admin-authentication-required.html')
     else:
         sellcars_dict = {}
@@ -998,24 +1021,39 @@ def retrieve_sellcars():
 @app.route('/updateSellCars/<int:id>/', methods=['GET', 'POST'])
 def update_sellcars(id):
     if (session['logged_in_admin'] == False):
-        return render_template('authentication-required.html')
+        return render_template('admin-authentication-required.html')
     else:
         update_sellcars = CreateSellCarForm(request.form)
         if request.method == 'POST' and update_sellcars.validate():
+            regex = r'[^A-Za-z0-9\s.,!]+' 
             db = shelve.open('sellcar.db', 'w')
             sellcars_dict = db['Sellcars']
 
-            sellcar = sellcars_dict.get(id)
-            sellcar.set_car_brand(update_sellcars.car_brand.data)
-            sellcar.set_car_model(update_sellcars.car_model.data)
-            sellcar.set_car_brand(update_sellcars.car_price.data)
-            sellcar.set_condition(update_sellcars.condition.data)
-            sellcar.set_remarks(update_sellcars.remarks.data)
+            car_brand = update_sellcars.car_brand.data
+            car_model = update_sellcars.car_model.data
+            car_price = update_sellcars.car_price.data
+            remarks = update_sellcars.remarks.data
+            condition = update_sellcars.condition.data
+            print(re.findall(regex, car_model), re.findall(regex, remarks))
+            
+            if re.findall(regex, car_model) == [] and re.findall(regex, remarks) == []:                
+                sellcar = sellcars_dict.get(id)
+                sellcar.set_car_brand(car_brand)
+                sellcar.set_car_model(car_model)
+                sellcar.set_car_price(car_price)
+                sellcar.set_condition(condition)
+                sellcar.set_remarks(remarks)
 
-            db['Sellcars'] = sellcars_dict
-            db.close()
+                db['Sellcars'] = sellcars_dict
+                db.close()
+                
+                flash("Car information successfully updated!", category='success')
+                return redirect(url_for('retrieve_sellcars'))
 
-            return redirect(url_for('retrieve_sellcars'))
+            else:
+                print("Special characters found in Update sell car form")
+                flash("No special characters allowed in input fields!", category='error')
+                return render_template('updateSellCars.html', form=update_sellcars)
 
         else:
             sellcars_dict = {}
@@ -1064,49 +1102,62 @@ def create_car():
         create_car_form = CreateCarsForm(request.form)
         if request.method == 'POST' and create_car_form.validate():
             create_cars_dict = {}
-            regex = r'[^A-Za-z0-9]+[,.!]'                            
-            db = shelve.open('createCar.db', 'c')
-
-            try:
-                create_cars_dict = db['Createcars']
-            except:
-                print("Error in retrieving Createcars from createCar.db.")
+            regex = r'[^A-Za-z0-9\s.,!]+' 
             
             carModel = create_car_form.car_model.data
             carBrand = create_car_form.car_brand.data
             carPrice = create_car_form.car_price.data
 
-            if re.findall(regex, carModel) or re.findall(regex, carPrice):
+            if re.findall(regex, carModel) == [] and re.findall(regex, carPrice) == []:
+                # check if car information already exist in database
+                db = shelve.open('createCar.db', 'r') # open database for reading
+                create_cars_dict = db['Createcars']
+
+                for key, value in create_cars_dict.items():
+                    if (carModel == value.get_car_model() and carBrand == value.get_car_brand() and carPrice == value.get_car_price()) or (carModel == value.get_car_model() and carBrand == value.get_car_brand()):
+                        print("car already exists!")
+                        flash("This car model already exists!", category='error')
+                        return render_template('createCar.html', form=create_car_form)
+                db.close()
+
+                db = shelve.open('createCar.db', 'c') # open database for creating car
+
+                try:
+                    create_cars_dict = db['Createcars']
+                except:
+                    print("Error in retrieving Createcars from createCar.db.")
+
+
+                Createcar = Cars.Cars(carModel, carBrand, carPrice)
+                count_id = 0
+                
+                try:
+                    for key in create_cars_dict:
+                        count_id = key
+                        count_id += 1
+                        Createcar.set_car_id(count_id)
+                except:
+                    count_id += 1
+                    Createcar.set_car_id
+
+                create_cars_dict[Createcar.get_car_id()] = Createcar
+                db['Createcars'] = create_cars_dict
+
+                # Test codes
+                create_cars_dict = db['Createcars']
+                Createcar = create_cars_dict[Createcar.get_car_id()]
+                print(Createcar.get_car_model(), Createcar.get_car_brand(), "was stored in sellcar.db successfully with sellcar_id ==", Createcar.get_car_id())
+                flash("Car successfully created!", category='success')
+
+                db.close()
+                return redirect(url_for('admin_dashboard'))
+
+            else:
                 print(re.findall(regex, carModel), re.findall(regex, carPrice))
                 print("Special characters found in order inputs.")
                 flash("No special characters allowed in input fields.", category='error')
                 return render_template('createCar.html', form=create_car_form)
 
-            else:
-                print(re.findall(regex, carModel), re.findall(regex, carPrice))
-                Createcar = Cars.Cars(carModel, carBrand, carPrice)
-            count_id = 0
-            
-            try:
-                for key in create_cars_dict:
-                    count_id = key
-                    count_id += 1
-                    Createcar.set_car_id(count_id)
-            except:
-                count_id += 1
-                Createcar.set_car_id
-
-            create_cars_dict[Createcar.get_car_id()] = Createcar
-            db['Createcars'] = create_cars_dict
-
-            # Test codes
-            create_cars_dict = db['Createcars']
-            Createcar = create_cars_dict[Createcar.get_car_id()]
-            print(Createcar.get_car_model(), Createcar.get_car_brand(), "was stored in sellcar.db successfully with sellcar_id ==", Createcar.get_car_id())
-
-            db.close()
-
-            return redirect(url_for('admin_dashboard'))
         return render_template('createCar.html', form=create_car_form)
 # Car Page END
 
@@ -1114,7 +1165,7 @@ def create_car():
 # Admin Retrieve Cars START
 @app.route('/adminRetrieveCars')
 def admin_retrieve_cars():
-    if ((session['logged_in'] == False) or (session['logged_in'] == True)) and (session['logged_in_admin'] == False):
+    if (session['logged_in_admin'] == False):
         return render_template('admin-authentication-required.html')
     else:
         create_cars_dict = {}
@@ -1134,24 +1185,36 @@ def admin_retrieve_cars():
 # Update create cars start
 @app.route('/adminUpdateCars/<int:id>/', methods=['GET', 'POST'])
 def update_cars(id):
-    if ((session['logged_in'] == False) or (session['logged_in'] == True)) and (session['logged_in_admin'] == False):
+    if (session['logged_in_admin'] == False):
         return render_template('admin-authentication-required.html')
     else:
         update_cars = CreateCarsForm(request.form)
         if request.method == 'POST' and update_cars.validate():
+            regex = r'[^A-Za-z0-9\s.,!]+'
             db = shelve.open('createCar.db', 'w')
             create_cars_dict = db['Createcars']
 
-            create_car = create_cars_dict.get(id)
-            create_car.set_car_brand(update_cars.car_brand.data)
-            create_car.set_car_model(update_cars.car_model.data)
-            create_car.set_car_price(update_cars.car_price.data)
+            car_brand = update_cars.car_brand.data
+            car_model = update_cars.car_model.data
+            car_price = update_cars.car_price.data
 
+            if re.findall(regex, car_model) == [] and re.findall(regex, car_price) == []:
+                create_car = create_cars_dict.get(id)
+                create_car.set_car_brand(car_brand)
+                create_car.set_car_model(car_model)
+                create_car.set_car_price(car_price)
 
-            db['Createcars'] = create_cars_dict
-            db.close()
+                db['Createcars'] = create_cars_dict
+                db.close()
 
-            return redirect(url_for('admin_retrieve_cars'))
+                flash("Car information successfully updated!", category='success')
+                return redirect(url_for('admin_retrieve_cars'))
+
+            else:
+                print(re.findall(regex, car_model), re.findall(regex, car_price))
+                print("Special characters found in update call to sell form")
+                flash("No special characters allowed in input fields!", category='error')
+                return render_template('adminUpdateCars.html', form=update_cars)
 
         else:
             create_cars_dict = {}
@@ -1171,7 +1234,7 @@ def update_cars(id):
 # Delete create Cars START
 @app.route('/deleteCars/<int:id>', methods=['POST'])
 def delete_car(id):
-    if ((session['logged_in'] == False) or (session['logged_in'] == True)) and (session['logged_in_admin'] == False):
+    if (session['logged_in'] == False) or (session['logged_in'] == True) or (session['logged_in_admin'] == False):
         return render_template('admin-authentication-required.html')
     else:
         Create_cars_dict = {}
@@ -1201,7 +1264,7 @@ def admin_dashboard():
 
 @app.route('/dashboard')
 def sales():
-    if ((session['logged_in'] == False) or (session['logged_in'] == True)) and (session['logged_in_admin'] == False):
+    if (session['logged_in_admin'] == False):
         return render_template('admin-authentication-required.html')
     else:
         orders_dict = {}
