@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask_wtf.csrf import CSRFProtect, CSRFError
 from User import User
 from Forms import CreateThread, CreateUserForm, CreateAdminForm, CreateSellCarForm, LoginForm, CreateOrderForm, CreateAnnouncement, CreateCarsForm
 import shelve, User, Thread, sellcar, Order, Announcement, Cars, bcrypt, re
@@ -6,10 +7,12 @@ from flask_login import login_user, login_required, logout_user, LoginManager
 admin = __import__("admin")
 
 app = Flask(__name__)
+csrf = CSRFProtect(app)
 app.secret_key = 'ff59a421971cd4de00539f85d307e6bb'
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'  # If user is not logged in
+csrf.init_app(app)
 
 
 @login_manager.user_loader
@@ -42,20 +45,25 @@ def admin_authentication_required():
     return render_template('admin-authentication-required.html')
 # Session Error/Exploit Prevention END
 
+@app.error_handler(CSRFError)
+def handle_csrf_error(e):
+    app.logger.error(f"error: {e} route: {request.url}")
+    return render_template('csrf_error.html'), 400
+
 # Error 404 Handling START
 @app.errorhandler(404)
 def page_not_found(e):
     print(e)
     app.logger.error(f"error: {e}, route: {request.url}")
-    return render_template('error404.html'), 404
-# Error 404 Handling END
+    return render_template('error404.html',), 404
+# Error 404 Handling END 
 
 @app.route('/about_me')
 def about():
-    if (session['logged_in'] == False):
+    if (session['logged_in'] == True) and (session['logged_in_admin'] == False):
         return render_template('authentication-required.html')
-    elif (session['logged_in_admin'] == False) and (session['logged_in'] == False):
-        return render_template('admin-authentication-required.html')
+    elif (session['logged_in_admin'] == True) and (session['logged_in'] == False):
+        return render_template('admin-authentication-required.ht')
     else:
         try:
             users_dict = {}
@@ -638,7 +646,7 @@ def create_thread():
             else:
                 print(re.findall(regex, thread_username), re.findall(regex, thread_title), re.findall(regex, thread_message))
                 print("Special chracters found in created thread")
-                flash("No special characters allowed for input fields.", category='error')  
+                flash("No special characters allowed in input fields.", category='error')  
                 return render_template('thread-creation.html', form=create_thread_form)
 
 
@@ -889,18 +897,22 @@ def checkout():
             expmonth = create_order_form.expmonth.data
             expyear = create_order_form.expyear.data
             cvv = create_order_form.cvv.data
-            
+
+
             print(re.findall(regex, postal_code), re.findall(regex2, card_name), re.findall(regex, card_no), re.findall(regex, expmonth), re.findall(regex, str(expyear)),re.findall(regex, cvv))            
-            # check if input has special character
-            if re.findall(regex, postal_code) == [] and  re.findall(regex2, card_name) == [] and re.findall(regex, card_no) == [] and re.findall(regex, expmonth) == [] and re.findall(regex, expyear) == [] and re.findall(regex, cvv) ==[]:
+            if re.findall(regex, postal_code) == [] and re.findall(regex2, card_name) == [] and re.findall(regex, card_no) == [] and re.findall(regex, expmonth) == [] and re.findall(regex, expyear) == [] and re.findall(regex, cvv) == []:
                 # hash the data inputs
                 card_no_digest = bcrypt.hashpw(card_no.encode(), bcrypt.gensalt())
                 expmonth_digest = bcrypt.hashpw(expmonth.encode(), bcrypt.gensalt())
                 expyear_digest = bcrypt.hashpw(expyear.encode(), bcrypt.gensalt())
                 cvv_digest = bcrypt.hashpw(cvv.encode(), bcrypt.gensalt())                    
 
+                for key in orders_dict:
+                    content = orders_dict[key]
+                    print(content)
+
                 orders = Order.Order(postal_code, card_name, card_no_digest, expmonth_digest, expyear_digest,  cvv_digest)
-                
+                            
                 count_id = 0
 
                 try:
@@ -914,17 +926,18 @@ def checkout():
                 
                 orders_dict[orders.get_order_id()] = orders
                 db['Orders'] = orders_dict
-                        
+                    
                 # Test Codes
                 orders = orders_dict[orders.get_order_id()]
                 print(orders.get_card_name(), "was stored in 'orders.db' successfully with order_id ==", orders.get_order_id())
                 db.close()
-
+            
             else:
-                print("Special characters found in order inputs.")
-                flash("No special characters allowed in input fields.", category='error')
+                print(re.findall(regex, postal_code), re.findall(regex2, card_name), re.findall(regex, card_no), re.findall(regex, expmonth), re.findall(regex, str(expyear)),re.findall(regex, cvv))            
+                print("Special characters found in order form")
+                flash("No special characters allowed in input fields!", category='error')
                 return render_template('checkout.html', form=create_order_form)
-
+                
             return redirect(url_for('order_confirmation'))
     return render_template('checkout.html', form=create_order_form)
 # Product Purchase END

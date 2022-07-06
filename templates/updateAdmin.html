@@ -5,6 +5,7 @@
 {% from "includes/_formHelper.html" import render_field %}
 <link rel="stylesheet" href="{{ url_for('static', filename='styles/account.css') }}">
 <form method="POST" action="#" autocomplete="off">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">  
 <section>
   <div class="container py-5 h-100">
     <div class="row d-flex justify-content-center align-items-center h-100">

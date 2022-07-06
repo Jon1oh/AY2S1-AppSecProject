@@ -55,8 +55,9 @@
     <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
       <div class="panel-body">
         <form id="form" class="topBefore" autocomplete="off">
-          <input id="name" type="text" placeholder="NAME">
-          <input id="email" type="text" placeholder="E-MAIL">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">  
+          <input id="name" type="text" placeholder="NAME" name="csrf_token" value="{{ csrf_token() }}">
+          <input id="email" type="text" placeholder="E-MAIL" name="csrf_token" value="{{ csrf_token() }}">
           <textarea id="message" type="text" placeholder="MESSAGE"></textarea>
           <input id="submit" type="submit" value="Submit Now!">
         </form>

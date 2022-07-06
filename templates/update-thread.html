@@ -6,6 +6,7 @@
 <h1 class="fw-bold text-center mb-3">Update Support Thread</h1>
 
 <form method="POST" action="" autocomplete="off">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">  
     <!-- Modal Codes (SUBMIT) -->
     <div class="modal fade" id="staticBackdropReply" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div class="modal-dialog">

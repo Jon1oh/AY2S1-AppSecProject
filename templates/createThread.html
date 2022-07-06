@@ -7,6 +7,7 @@
 <h1 class="fw-bold">Create Thread</h1>
 
 <form method="POST" action="" autocomplete="off">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">  
     <div class="form-group mb-3">
         {{ render_field(form.username, class="form-control") }}
     </div>

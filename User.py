@@ -41,9 +41,6 @@ class User(UserMixin):
     def get_mobile_no(self):
         return self.__mobile_no
 
-    def get_address(self):
-        return self.__address
-
     def get_postal_code(self):
         return self.__postal_code
 
