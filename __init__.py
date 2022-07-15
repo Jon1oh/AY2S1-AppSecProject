@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
-from flask_wtf.csrf import CSRFProtect, CSRFError
+from flask_wtf.csrf import CSRFProtect
+from MyAes import encrypt, decrypt, get_fixed_key
 from User import User
 from Forms import CreateThread, CreateUserForm, CreateAdminForm, CreateSellCarForm, LoginForm, CreateOrderForm, CreateAnnouncement, CreateCarsForm
 import shelve, User, Thread, sellcar, Order, Announcement, Cars, bcrypt, re
@@ -45,7 +46,7 @@ def admin_authentication_required():
     return render_template('admin-authentication-required.html')
 # Session Error/Exploit Prevention END
 
-@app.error_handler(CSRFError)
+@app.errorhandler(400)
 def handle_csrf_error(e):
     app.logger.error(f"error: {e} route: {request.url}")
     return render_template('csrf_error.html'), 400
@@ -60,10 +61,8 @@ def page_not_found(e):
 
 @app.route('/about_me')
 def about():
-    if (session['logged_in'] == True) and (session['logged_in_admin'] == False):
+    if (session['logged_in'] == False) and (session['logged_in_admin'] == False):
         return render_template('authentication-required.html')
-    elif (session['logged_in_admin'] == True) and (session['logged_in'] == False):
-        return render_template('admin-authentication-required.ht')
     else:
         try:
             users_dict = {}
@@ -100,29 +99,39 @@ def login():
             password = login_form.password.data
             db = shelve.open('users.db', 'r')
             db_content = db['Users']
+            username_list = []
+            regex = r'[^A-Za-z0-9]+'         
+            if re.findall(regex, username) != [] and re.findall(regex, password) != []:
+                print("Special characters found in login input page!")
+                flash("No speical special characters allowed in input fields!", category='error')
+                return render_template('login.html', form=login_form)
             for key in db_content:
                 content = db_content[key]
                 print(content.get_username())
-                if username == content.get_username():
-                    print("Username exist")
-                    # this compares the digest of the password (when register for account) with the digest of the
-                    # password input
-                    if bcrypt.checkpw(password.encode(), content.get_password()):
-                        print("digest matches!")
-                        flash('You have logged in successfully.', category='success')
-                        login_user(content, remember=True)
-                        session['user_id'] = content.get_user_id()
-                        if content.get_member() == 'Admin':
-                            session['logged_in_admin'] = True
-                            return redirect(url_for('admin_dashboard'))
-                        else:
-                            session['logged_in'] = True
-                            return redirect(url_for('home'))
+                username_list.append(content.get_username())
+                print(list(set(username_list)))
+            if username not in username_list:
+                print("Username not found in database!")
+                flash("Username not registered!", category='error')
+                return render_template('login.html', form=login_form)
+            else: 
+                print("Username exist")
+                # this compares the digest of the password (when register for account) with the digest of the
+                # password input
+                if bcrypt.checkpw(password.encode(), content.get_password()):
+                    print("digest matches!")
+                    flash('You have logged in successfully.', category='success')
+                    login_user(content, remember=True)
+                    session['user_id'] = content.get_user_id()
+                    if content.get_member() == 'Admin':
+                        session['logged_in_admin'] = True
+                        return redirect(url_for('admin_dashboard'))
                     else:
-                        print("password digests don't match")
-                        flash('Incorrect username or password', category='error')
+                        session['logged_in'] = True
+                        return redirect(url_for('home'))
                 else:
-                    print("Username does not exist")
+                    print("password digests don't match")
+                    flash('Incorrect username or password', category='error')
         return render_template('login.html', form=login_form)
     else:
         return redirect(url_for('home'))
@@ -281,7 +290,7 @@ def create_user():
                     return redirect(url_for('create_user'))
                 # when the input has special characters
                 else:
-                    if bool(re.findall(regex, username) or re.findall(regex, fullName) or re.findall(regex, mobile) or re.findall(regex, email) or re.findall(regex, postal_code) or re.findall(regex, password) or re.findall(regex, confirm_password)) == False:
+                    if re.findall(regex, username) != [] and re.findall(regex, fullName) != [] and re.findall(regex, mobile) != [] and re.findall(regex, email) != [] and re.findall(regex, postal_code) != [] and re.findall(regex, password) != [] and re.findall(regex, confirm_password)!= []:
                         flash("No special characters for input fields allowed.", category='error')                    
                         return redirect(url_for('create_user')) 
 
@@ -645,7 +654,7 @@ def create_thread():
 
             else:
                 print(re.findall(regex, thread_username), re.findall(regex, thread_title), re.findall(regex, thread_message))
-                print("Special chracters found in created thread")
+                print("Special characters found in created thread")
                 flash("No special characters allowed in input fields.", category='error')  
                 return render_template('thread-creation.html', form=create_thread_form)
 
@@ -873,23 +882,20 @@ def delete_announcement(id):
         return redirect(url_for('admin_authentication_required'))
 # Support Forum Codes END
 
-
 # Product Purchase START
 @app.route('/checkout', methods=['GET', 'POST'])
 @login_required
 def checkout():
     if (session['logged_in'] == True) or (session['logged_in_admin'] == True):
         create_order_form = CreateOrderForm(request.form)
+        secret_key = get_fixed_key() # get the fixed secret key
         if request.method == 'POST' and create_order_form.validate():
             orders_dict = {}
+            users_dict = {}
             regex = r'[^A-Za-z0-9]+'    
             regex2 = r'[^A-Za-z0-9\s]' 
-
-            db = shelve.open('orders.db', 'c')
-            try:
-                orders = db['Orders']
-            except:
-                print("Error retrieving orders from Order.py.")
+            name_list = []
+            payment_list = []
 
             postal_code = create_order_form.postal_code.data
             card_name = create_order_form.card_name.data
@@ -897,47 +903,129 @@ def checkout():
             expmonth = create_order_form.expmonth.data
             expyear = create_order_form.expyear.data
             cvv = create_order_form.cvv.data
+            
+            # check if card name and postal code is valid in database or not
+            db = shelve.open('users.db', 'r')
+            users_dict = db['Users']
+            
+            for key in users_dict:
+                content = users_dict[key]
+                name_list.append((content.get_full_name(), content.get_postal_code()))
+            print(set(name_list))
+            db.close()
 
+            db = shelve.open('orders.db', 'c')
+            try:
+                orders = db['Orders']
+                orders_dict = orders
+            except:
+                print("Error retrieving orders from Order.py.")
 
-            print(re.findall(regex, postal_code), re.findall(regex2, card_name), re.findall(regex, card_no), re.findall(regex, expmonth), re.findall(regex, str(expyear)),re.findall(regex, cvv))            
-            if re.findall(regex, postal_code) == [] and re.findall(regex2, card_name) == [] and re.findall(regex, card_no) == [] and re.findall(regex, expmonth) == [] and re.findall(regex, expyear) == [] and re.findall(regex, cvv) == []:
-                # hash the data inputs
-                card_no_digest = bcrypt.hashpw(card_no.encode(), bcrypt.gensalt())
-                expmonth_digest = bcrypt.hashpw(expmonth.encode(), bcrypt.gensalt())
-                expyear_digest = bcrypt.hashpw(expyear.encode(), bcrypt.gensalt())
-                cvv_digest = bcrypt.hashpw(cvv.encode(), bcrypt.gensalt())                    
-
-                for key in orders_dict:
+            if orders_dict:
+                for key in orders_dict.copy():
                     content = orders_dict[key]
-                    print(content)
+                    print(re.findall(regex, postal_code), re.findall(regex2, card_name), re.findall(regex, card_no), re.findall(regex, expmonth), re.findall(regex, expyear), re.findall(regex, cvv))
+                    if re.findall(regex, postal_code) == [] and re.findall(regex2, card_name) == [] and re.findall(regex, card_no) == [] and re.findall(regex, expmonth) == [] and re.findall(regex, expyear) == [] and re.findall(regex, cvv) == []:
+                        if (card_name, postal_code) not in name_list: # when the card name is valid
+                            # get the order_id of the customer
+                            print("Invalid postal code or name on card!")
+                            flash("Invalid name on card or postal code!", category='error')
+                            return render_template('checkout.html', form=create_order_form)
+                        print("Inside If statement. Name inside list.")
 
-                orders = Order.Order(postal_code, card_name, card_no_digest, expmonth_digest, expyear_digest,  cvv_digest)
+                        # check if payment details match.
+
+                        # encrypt the inputs and store in database
+                        cipher_postal_code = encrypt(secret_key, postal_code.encode("utf8"))
+                        cipher_card_name = encrypt(secret_key, card_name.encode("utf8"))
+                        cipher_card_no = encrypt(secret_key, card_no.encode("utf8"))
+                        cipher_expmonth = encrypt(secret_key, expmonth.encode("utf8"))
+                        cipher_expyear = encrypt(secret_key, expyear.encode("utf8"))
+                        cipher_cvv = encrypt(secret_key, cvv.encode("utf8"))
+                        orders = Order.Order(cipher_postal_code, cipher_card_name, cipher_card_no, cipher_expmonth, cipher_expyear, cipher_cvv)                                            
+                        count_id = 0
+
+                        try:
+                            for key in orders_dict:
+                                count_id = key
+                                count_id += 1
+                                orders.set_order_id(count_id)
+                        except:
+                            count_id += 1
+                            orders.set_order_id(count_id)
+                    
+                        orders_dict[orders.get_order_id()] = orders
+                        print("orders_dict after: ", orders_dict)
+                        db['Orders'] = orders_dict
+                        # Test codes
+                        orders = orders_dict[orders.get_order_id()]
+                        print(decrypt(get_fixed_key(), orders.get_card_name()).decode(), "was stored in 'orders.db' successfully with order_id ==", orders.get_order_id())
+                        db.close()
+                                            
+                    else: # when have special characters
+                        print("Special characters found in create orders form.")
+                        flash("No special characters for input fields allowed.", category='error')                    
+                        return render_template('checkout.html', form=create_order_form) 
+
+            else: # if not order_dict
+                print(re.findall(regex, postal_code), re.findall(regex2, card_name), re.findall(regex, card_no), re.findall(regex, expmonth), re.findall(regex, expyear), re.findall(regex, cvv))
+                if re.findall(regex, postal_code) == [] and re.findall(regex2, card_name) == [] and re.findall(regex, card_no) == [] and re.findall(regex, expmonth) == [] and re.findall(regex, expyear) == [] and re.findall(regex, cvv) == []:
+                    # append all full names to Fullname list
+                    db = shelve.open('users.db', 'r')
+                    try:
+                        users_dict = db['Users']
+                    except:
+                        print("Error retrieving users from User.py.")
+                    
+                    for key in users_dict:
+                        content = users_dict[key]
+                        name_list.append((content.get_full_name(), content.get_postal_code()))
+                    print(set(name_list))
+                    db.close()
+                    
+                    if (card_name, postal_code) not in name_list:
+                        print("Invalid card name or postal code!")  
+                        flash("Invalid postal code or name on card!", category='error')
+                        return render_template('checkout.html', form=create_order_form)
+                    
+                    # check if credit card details match
+                    print("Inside Else statement, orders_dict before: " ,orders_dict)                    
+
+                    db = shelve.open('orders.db', 'c')
+                    print("Inside Else statement. Name inside list.")
+                    # encrypt the inputs and store in database
+                    cipher_postal_code = encrypt(secret_key, postal_code.encode("utf8"))
+                    cipher_card_name = encrypt(secret_key, card_name.encode("utf8"))
+                    cipher_card_no = encrypt(secret_key, card_no.encode("utf8"))
+                    cipher_expmonth = encrypt(secret_key, expmonth.encode("utf8"))
+                    cipher_expyear = encrypt(secret_key, expyear.encode("utf8"))
+                    cipher_cvv = encrypt(secret_key, cvv.encode("utf8"))
+                    orders = Order.Order(cipher_postal_code, cipher_card_name, cipher_card_no, cipher_expmonth, cipher_expyear, cipher_cvv)                                            
+                    count_id = 0
+
+                    try:
+                        for key in orders_dict:
+                            count_id = key
+                            count_id += 1
+                            orders.set_order_id(count_id)
                             
-                count_id = 0
-
-                try:
-                    for key in orders_dict:
-                        count_id = key
+                    except:
                         count_id += 1
                         orders.set_order_id(count_id)
-                except:
-                    count_id += 1
-                    orders.set_order_id(count_id)
-                
-                orders_dict[orders.get_order_id()] = orders
-                db['Orders'] = orders_dict
+                        
                     
-                # Test Codes
-                orders = orders_dict[orders.get_order_id()]
-                print(orders.get_card_name(), "was stored in 'orders.db' successfully with order_id ==", orders.get_order_id())
-                db.close()
-            
-            else:
-                print(re.findall(regex, postal_code), re.findall(regex2, card_name), re.findall(regex, card_no), re.findall(regex, expmonth), re.findall(regex, str(expyear)),re.findall(regex, cvv))            
-                print("Special characters found in order form")
-                flash("No special characters allowed in input fields!", category='error')
-                return render_template('checkout.html', form=create_order_form)
-                
+                    orders_dict[orders.get_order_id()] = orders
+                    print("orders_dict after: ", orders_dict)
+                    db['Orders'] = orders_dict
+                    # Test codes
+                    orders = orders_dict[orders.get_order_id()]
+                    print(decrypt(get_fixed_key(), (orders.get_card_name())).decode(), "was stored in 'orders.db' successfully with order_id ==", orders.get_order_id())
+                    db.close()
+                else: # when there are special characters
+                    print("Special characters found in create orders form.")
+                    flash("No special characters for input fields allowed.", category='error')                    
+                    return render_template('checkout.html', form=create_order_form) 
+
             return redirect(url_for('order_confirmation'))
     return render_template('checkout.html', form=create_order_form)
 # Product Purchase END
@@ -946,6 +1034,7 @@ def checkout():
 # Order Confirmation Page START
 @app.route('/order-confirmation')
 def order_confirmation():
+    secret_key = get_fixed_key()
     orders_dict = {}
     try:
         db = shelve.open('orders.db', 'r')
@@ -955,11 +1044,18 @@ def order_confirmation():
         print("Error in retrieving Orders from 'orders.db'.")
     
     orders_list = []
-    print(orders_dict)
     for key in orders_dict:
         orders = orders_dict.get(key)
-        orders_list.append(orders)
-
+        # print(orders.get_postal_code()) # this prints the ciphertext of postal code
+        # decrypt all data in orders 
+        plain_postal_code = decrypt(secret_key, orders.get_postal_code()).decode()
+        plain_card_name = decrypt(secret_key, orders.get_card_name()).decode()
+        plain_card_no = decrypt(secret_key, orders.get_card_no()).decode()
+        plain_expmonth = decrypt(secret_key, orders.get_expmonth()).decode()
+        plain_expyear = decrypt(secret_key, orders.get_expyear()).decode()
+        plain_cvv = decrypt(secret_key, orders.get_cvv()).decode()
+        orders = Order.Order(plain_postal_code, plain_card_name, plain_card_no, plain_expmonth, plain_expyear, plain_cvv)
+        orders_list.append(orders)    
     return render_template('order-confirmation.html', count=len(orders_list), orders_list=orders_list[::-1])
 # Order Confirmation Page END
 
@@ -967,11 +1063,9 @@ def order_confirmation():
 # Order History START
 @app.route('/retrieveOrder')
 def retrieve_order():
-    if session['logged_in'] == False:
-        return render_template('authentication-required.html')
-    else:
+    if session['logged_in'] == True:
         orders_dict = {}
-
+        secret_key = get_fixed_key()
         try:
             db = shelve.open('orders.db', 'r')
             orders_dict = db['Orders']
@@ -983,9 +1077,18 @@ def retrieve_order():
         orders_list = []
         for key in orders_dict:
             orders = orders_dict.get(key)
+            plain_postal_code = decrypt(secret_key, orders.get_postal_code()).decode()
+            plain_card_name = decrypt(secret_key, orders.get_card_name()).decode()
+            plain_card_no = decrypt(secret_key, orders.get_card_no()).decode()
+            plain_expmonth = decrypt(secret_key, orders.get_expmonth()).decode()
+            plain_expyear = decrypt(secret_key, orders.get_expyear()).decode()
+            plain_cvv = decrypt(secret_key, orders.get_cvv()).decode()
+            orders = Order.Order(plain_postal_code, plain_card_name, plain_card_no, plain_expmonth, plain_expyear, plain_cvv)            
             orders_list.append(orders)
 
         return render_template('retrieveOrder.html', count=len(orders_list), orders_list=orders_list[::-1])
+    else:
+        return render_template('authentication-required.html')
 # Order History END
 
 # Delete Order START

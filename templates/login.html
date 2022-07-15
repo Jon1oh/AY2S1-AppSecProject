@@ -20,6 +20,7 @@
     <body style="background-image: url('../static/images/login-bg.png'); height: 100%; background-position: center; background-repeat: no-repeat; background-size: cover;">
         <div class="container-lg">
             <form method="POST" action="#" autocomplete="off">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">  
                 <div class="d-flex flex-column min-vh-100 justify-content-center align-items-center">
                     <div class="card">
                         <div class="card-body">
