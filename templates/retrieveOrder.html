@@ -117,7 +117,6 @@ h5 {
                     <p>Shipping Address: Singapore {{ orders.get_postal_code() }}</p>
                     <p>Order ID: {{ orders.get_order_id() }}</p>
                     <form action="{{url_for('delete_order', id=orders.get_order_id())}}" method="POST">
-                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">  
                       <input type="submit" value="Cancel Order" class="btn btn-danger">
                     </form>
                   </div>

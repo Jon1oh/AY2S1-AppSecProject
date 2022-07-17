@@ -8,7 +8,6 @@
 <hr>
 
 <form method="POST" action="" autocomplete="off">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">  
     <div class="text-left">
         <div class="mb-3 mx-auto" style="max-width: 750px;">
             {{ render_field(form.car_brand, class="form-control", style="list-style-type:none") }}

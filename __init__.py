@@ -1,20 +1,16 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
-from flask_wtf.csrf import CSRFProtect
 from MyAes import encrypt, decrypt, get_fixed_key
 from User import User
-from Forms import CreateThread, CreateUserForm, CreateAdminForm, CreateSellCarForm, LoginForm, CreateOrderForm, CreateAnnouncement, CreateCarsForm
+from Forms import CreateThread, CreateUserForm, CreateAdminForm, CreateSellCarForm, LoginForm, CreateOrderForm, CreateAnnouncement, CreateCarsForm, SearchBar
 import shelve, User, Thread, sellcar, Order, Announcement, Cars, bcrypt, re
 from flask_login import login_user, login_required, logout_user, LoginManager
 admin = __import__("admin")
 
 app = Flask(__name__)
-csrf = CSRFProtect(app)
 app.secret_key = 'ff59a421971cd4de00539f85d307e6bb'
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'  # If user is not logged in
-csrf.init_app(app)
-
 
 @login_manager.user_loader
 def load_user(id):
@@ -46,10 +42,11 @@ def admin_authentication_required():
     return render_template('admin-authentication-required.html')
 # Session Error/Exploit Prevention END
 
-@app.errorhandler(400)
-def handle_csrf_error(e):
-    app.logger.error(f"error: {e} route: {request.url}")
-    return render_template('csrf_error.html'), 400
+@app.errorhandler(405)
+def method_not_allowed(e):
+    print(e)
+    app.logger.error(f"error: {e}, route: {request.url}")
+    return render_template('error405.html'), 405
 
 # Error 404 Handling START
 @app.errorhandler(404)
@@ -73,9 +70,6 @@ def about():
             users_list = []
             if session.get('user_id') is not None:
                 users_list.append(users_dict.get(session.get('user_id')))
-            # for key in users_dict:
-            #     user = users_dict.get(key)
-            #     users_list.append(user)
 
             return render_template('about_me.html', count=len(users_list), users_list=users_list)
         except:
@@ -87,7 +81,6 @@ def about():
 def home():
     return render_template('home.html')
 # Landing Page END
-
 
 # Login/Logout Function START
 @app.route('/login', methods=['GET', 'POST'])
@@ -103,7 +96,7 @@ def login():
             regex = r'[^A-Za-z0-9]+'         
             if re.findall(regex, username) != [] and re.findall(regex, password) != []:
                 print("Special characters found in login input page!")
-                flash("No speical special characters allowed in input fields!", category='error')
+                flash("No special special characters allowed in input fields!", category='error')
                 return render_template('login.html', form=login_form)
             for key in db_content:
                 content = db_content[key]
@@ -480,10 +473,11 @@ def delete_user(id):
         print("Error")
 # Account Management END
 
-
 # Buy Car START
-@app.route('/buy-car')
+@app.route('/buy-car', methods=['GET', 'POST'])
 def buy_car():
+    regex = r'[^A-Za-z0-9\s]+'     
+    search_form = SearchBar(request.form)   
     create_cars_dict = {}
     db = shelve.open('createCar.db', 'r')
     create_cars_dict = db['Createcars']
@@ -493,6 +487,19 @@ def buy_car():
     for key in create_cars_dict:
         cars = create_cars_dict.get(key)
         createCar_list.append(cars)
+    
+    if request.method == "POST" and search_form.validate():
+        search = search_form.search.data
+        # check for special characters
+        print(re.findall(regex, search))
+        if re.findall(regex, search) != []:
+            print("Special characters found in search bar!")
+            error = "405 Method Not Allowed"
+            method_not_allowed(error)
+            return render_template('error405.html'), 405
+        else:
+            return redirect(url_for('buy_car'))
+
 
     return render_template('buy-car.html', count=len(createCar_list), createCar_list=createCar_list)
 # Buy Car END

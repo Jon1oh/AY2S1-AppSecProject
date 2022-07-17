@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/CarOrSell-logo.png') }}">
 
-        <title>400 Bad Request | CarOrSell</title>
+        <title>405 Method Not Allowed | CarOrSell</title>
 
         <!-- CarOrSell CSS -->
         <link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}">
@@ -18,9 +18,9 @@
     </head>
     <body>
         <div class="text-center align-content-center mt-5 mx-2 my-auto">
-            <p class="fw-bold" style="font-size: 50px;">400 Bad Request</p>
+            <p class="fw-bold" style="font-size: 50px;">405 Method Not Allowed</p>
             <img src="{{ url_for('static', filename='images/CarOrSell-logo.png') }}"} alt="CarOrSell-logo.png" width="300px" height="235px" class="mb-3">
-            <p>The CSRF Token is missing!</p>
+            <p>It seems that a car has crashed into the page that you are looking for.</p>
             <p class="fst-italic">"Drive slowly to go back home, or drive fast for a chance to see the Gates of Heaven early."</p>
             <a href="javascript:history.back()" class="btn btn-info fw-bold">Go Back Safely</a>
         </div>

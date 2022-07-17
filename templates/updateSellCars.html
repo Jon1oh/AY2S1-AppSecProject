@@ -14,7 +14,6 @@
 <br>
 
 <form method="POST" action="" autocomplete="off">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">  
   <div class="form-group">
     {{ render_field(form.car_brand, class="form-control", style="list-style-type:none") }}
   </div>

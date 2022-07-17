@@ -46,6 +46,8 @@ class LoginForm(Form):
     username = StringField('Username:', [validators.Length(min=1, max=50), validators.DataRequired()])
     password = PasswordField('Password:', [validators.Length(min=1, max=50), validators.DataRequired()])
 
+class SearchBar(Form):
+    search = StringField([validators.Length(max=15)])
 
 class CreateSellCarForm(Form):
     car_model = StringField('Car Model:', [validators.Length(min=1, max=150), validators.DataRequired()])
