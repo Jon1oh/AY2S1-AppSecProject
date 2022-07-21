@@ -14,7 +14,7 @@ login_manager.login_view = 'login'  # If user is not logged in
 
 @login_manager.user_loader
 def load_user(id):
-    db = shelve.open('users.db', 'r')
+    db = shelve.open('database/users.db', 'r')
     db_content = db['Users']
     if db_content.get(id) is None:
         return None
@@ -63,7 +63,7 @@ def about():
     else:
         try:
             users_dict = {}
-            db = shelve.open('users.db', 'r')
+            db = shelve.open('database/users.db', 'r')
             users_dict = db['Users']
             db.close()
 
@@ -73,7 +73,7 @@ def about():
 
             return render_template('about_me.html', count=len(users_list), users_list=users_list)
         except:
-            print("Error1")
+            print("Error")
 
 
 # Landing Page START
@@ -149,7 +149,7 @@ def retrieve_admin():
     else:    
         try:
             users_dict = {}
-            db = shelve.open('users.db', 'r')
+            db = shelve.open('database/users.db', 'r')
             users_dict = db['Users']
             db.close()
 
@@ -162,7 +162,7 @@ def retrieve_admin():
 
             return render_template('retrieve_admin.html', count=len(users_list), users_list=users_list)
         except:
-            print("Error1")
+            print("Error")
 
 
 @app.route('/updateAdmin/<int:id>/', methods=['GET', 'POST'])  # exception
@@ -173,7 +173,7 @@ def update_admin(id):
         regex2 = r'[^A-Za-z0-9\s]+[@.]'        
         try:
             users_dict = {}
-            db = shelve.open('users.db', 'w')
+            db = shelve.open('database/users.db', 'w')
             users_dict = db['Users']
         except:
             print("Error")
@@ -222,7 +222,7 @@ def update_admin(id):
     else:
         try:
             users_dict = {}
-            db = shelve.open('users.db', 'r')
+            db = shelve.open('database/users.db', 'r')
             users_dict = db['Users']
         except:
             print("Error")
@@ -254,7 +254,7 @@ def create_user():
     if request.method == 'POST' and create_user_form.validate():
         users_dict = {}
         regex = r'[^A-Za-z0-9]+'         
-        db = shelve.open('users.db', 'c')  # check, scan dict for existing
+        db = shelve.open('database/users.db', 'c')  # check, scan dict for existing
 
         try:
             users_dict = db['Users']  # retrieve
@@ -349,7 +349,7 @@ def create_user():
 def retrieve_users():
     try:
         users_dict = {}
-        db = shelve.open('users.db', 'r')
+        db = shelve.open('database/users.db', 'r')
         users_dict = db['Users']
         db.close()
 
@@ -370,10 +370,11 @@ def update_user(id):
     update_user_form = CreateUserForm(request.form)
     if request.method == 'POST' and update_user_form.validate():
         regex = r'[^A-Za-z0-9]+'         
-        regex2 = r'[^A-Za-z0-9\s]+[@.]'         
+        regex2 = r'[^A-Za-z0-9\s]+[@.]'   
+
         try:
             users_dict = {}
-            db = shelve.open('users.db', 'w')
+            db = shelve.open('database/users.db', 'w')
             users_dict = db['Users']
         except:
             print("Error")
@@ -383,18 +384,15 @@ def update_user(id):
         update_email = update_user_form.email.data
         update_mobile_no = update_user_form.mobile_no.data
         update_username = update_user_form.username.data
+        update_postal_code = update_user_form.postal_code.data
         update_password = update_user_form.password.data
         update_confirm_password = update_user_form.confirm_password.data
 
         if users_dict:
             for key in users_dict:
                 content = users_dict[key]
-                # when username already taken
-                if update_username == content.get_username():
-                    flash("Username already taken.", category='error')
-                    return render_template('updateUser.html', form=update_user_form)
                 # when the input has special characters
-                if re.findall(regex, update_username) or re.findall(regex2, update_full_name) or re.findall(regex, update_mobile_no) or re.findall(regex2, update_email) or re.findall(regex, update_password) or re.findall(regex, update_confirm_password):
+                if re.findall(regex, update_username) != [] and re.findall(regex2, update_full_name) != [] and re.findall(regex, update_mobile_no) != [] and re.findall(regex2, update_email) != [] and re.findall(regex, update_password) != [] and re.findall(regex, update_confirm_password) != []:
                     print(re.findall(regex, update_username))
                     print(re.findall(regex, update_full_name))
                     print(re.findall(regex, update_mobile_no))
@@ -406,32 +404,37 @@ def update_user(id):
                     flash("No special characters for input fields allowed.", category='error')                    
                     return render_template('updateUser.html', form=update_user_form)
                     
-            else:
-                update_password_digest = bcrypt.hashpw(update_password.encode(), bcrypt.gensalt())
-                update_confirm_password_digest = bcrypt.hashpw(update_confirm_password.encode(), bcrypt.gensalt())
-                update_password_digest = update_confirm_password_digest
+                else: # when there are no special characters
+                    # print(update_username, content.get_username(), "\n", update_full_name, content.get_full_name(), "\n", update_gender, content.get_gender(), "\n", update_postal_code, content.get_postal_code(), "\n", update_email, content.get_email())
+                    if update_username != content.get_username() or update_full_name != content.get_full_name() or update_email != content.get_email() or update_mobile_no != content.get_mobile_no() or update_gender != content.get_gender() or (bcrypt.checkpw(update_password.encode(), content.get_password()) and bcrypt.checkpw(update_confirm_password.encode(), content.get_confirm_password())):
+                        update_password_digest = bcrypt.hashpw(update_password.encode(), bcrypt.gensalt())
+                        update_confirm_password_digest = bcrypt.hashpw(update_confirm_password.encode(), bcrypt.gensalt())
+                        update_password_digest = update_confirm_password_digest
 
-                user = users_dict.get(id)
-                user.set_full_name(update_full_name)
-                user.set_gender(update_gender)
-                user.set_email(update_email)
-                user.set_mobile_no(update_mobile_no)            
-                user.set_username(update_username)
-                user.set_password(update_password_digest)
-                user.set_confirm_password(update_confirm_password_digest)
+                        user = users_dict.get(id)
+                        user.set_full_name(update_full_name)
+                        user.set_gender(update_gender)
+                        user.set_email(update_email)
+                        user.set_mobile_no(update_mobile_no)            
+                        user.set_username(update_username)
+                        user.set_postal_code(update_postal_code)
+                        user.set_password(update_password_digest)
+                        user.set_confirm_password(update_confirm_password_digest)
 
-                db['Users'] = users_dict
-                db.close()
-                print("User information updated.")
-                flash("User information successfully updated!", category='success')
-            
-            return redirect(url_for('retrieve_admin'))
-
-            # return render_template('updateUser.html', form=update_user_form)        
+                        db['Users'] = users_dict
+                        db.close()
+                        print("User information updated.")
+                        flash("User information successfully updated!", category='success')
+                        return about()
+                    else:
+                        print("No information updated!")
+                        flash("No information updated!", category='error')
+                        return render_template('updateUser.html', form=update_user_form)        
+                # return render_template('updateUser.html', form=update_user_form)        
     else:
         try:
             users_dict = {}
-            db = shelve.open('users.db', 'r')
+            db = shelve.open('database/users.db', 'r')
             users_dict = db['Users']
         except:
             print("Error")
@@ -446,6 +449,7 @@ def update_user(id):
             user.set_email(update_email)
             user.set_mobile_no(update_mobile_no)            
             user.set_username(update_username)
+            user.set_postal_code(update_postal_code)
             user.set_password(update_password_digest)
             user.set_confirm_password(update_confirm_password_digest)
 
@@ -460,7 +464,7 @@ def update_user(id):
 def delete_user(id):
     try:
         users_dict = {}
-        db = shelve.open('users.db', 'w')
+        db = shelve.open('database/users.db', 'w')
         users_dict = db['Users']
 
         users_dict.pop(id)
@@ -479,7 +483,7 @@ def buy_car():
     regex = r'[^A-Za-z0-9\s]+'     
     search_form = SearchBar(request.form)   
     create_cars_dict = {}
-    db = shelve.open('createCar.db', 'r')
+    db = shelve.open('database/createCar.db', 'r')
     create_cars_dict = db['Createcars']
     db.close()
 
@@ -498,6 +502,7 @@ def buy_car():
             method_not_allowed(error)
             return render_template('error405.html'), 405
         else:
+            print(search)
             return redirect(url_for('buy_car'))
 
 
@@ -509,7 +514,7 @@ def buy_car():
 @app.route('/browse-listings')
 def browse_listings():
     sellcars_dict = {}
-    db = shelve.open('sellcar.db', 'r')
+    db = shelve.open('database/sellcar.db', 'r')
     sellcars_dict = db['Sellcars']
     db.close()
 
@@ -539,7 +544,7 @@ def sell_your_car():
         db = shelve.open('sellcar.db', 'c')
 
         try:
-            sellcars_dict = db['Sellcars']
+            sellcars_dict = db['database/Sellcars']
         except:
             print("Error in retrieving Sellcars from sellcar.db.")
 
@@ -577,7 +582,7 @@ def support_forum():
     announcements_dict = {}
 
     try:
-        db = shelve.open('announcements.db', 'r')
+        db = shelve.open('database/announcements.db', 'r')
         announcements_dict = db['Announcements']
         db.close()
     except:
@@ -593,7 +598,7 @@ def support_forum():
     threads_dict = {}
 
     try:
-        db = shelve.open('threads.db', 'r')
+        db = shelve.open('database/threads.db', 'r')
         threads_dict = db['Threads']
         db.close()
     except:
@@ -621,12 +626,12 @@ def create_thread():
             thread_message = create_thread_form.thread_message.data
             thread_reply = create_thread_form.thread_reply.data
             
-            db = shelve.open('users.db', 'r')
+            db = shelve.open('database/users.db', 'r')
             users_dict = db['Users']
 
             # check if username exists in database
             
-            db = shelve.open('threads.db', 'c')
+            db = shelve.open('database/threads.db', 'c')
 
             try:
                 threads_dict = db['Threads']
@@ -678,7 +683,7 @@ def view_thread(id):
     if request.method == "POST" and view_thread_form.validate():
         threads_dict = {}
         print(threads_dict)
-        db = shelve.open('threads.db', 'w')
+        db = shelve.open('database/threads.db', 'w')
 
         try:
             threads_dict = db['Threads']
@@ -703,7 +708,7 @@ def view_thread(id):
         return redirect(url_for('support_forum'))
     else:
         threads_dict = {}
-        db = shelve.open('threads.db', 'r')
+        db = shelve.open('database/threads.db', 'r')
 
         try:
             threads_dict = db['Threads']
@@ -734,7 +739,7 @@ def update_thread(id):
         if request.method == "POST" and update_thread_form.validate():
             regex = r'[^A-Za-z0-9\s.,!]+' 
             threads_dict = {}
-            db = shelve.open('threads.db', 'w')
+            db = shelve.open('database/threads.db', 'w')
 
             try:
                 threads_dict = db['Threads']
@@ -768,7 +773,7 @@ def update_thread(id):
             else:
                 print(re.findall(regex, thread_username), re.findall(regex, thread_title), re.findall(regex, thread_message), re.findall(regex, thread_reply))                
                 print("Special characters found in update support thread form.")
-                flash("No special chracters allowed in input fields!", category='error')
+                flash("No special characters allowed in input fields!", category='error')
                 return render_template('update-thread.html', form=update_thread_form)
         else:
             threads_dict = {}
@@ -802,7 +807,7 @@ def update_thread(id):
 def delete_thread(id):
     if session['logged_in_admin'] == True:
         threads_dict = {}
-        db = shelve.open('threads.db', 'w')
+        db = shelve.open('database/threads.db', 'w')
         threads_dict = db['Threads']
 
         threads_dict.pop(id)
@@ -822,7 +827,7 @@ def create_announcement():
         if request.method == 'POST' and create_announcement_form.validate():
             announcements_dict = {}
             regex = r'[^A-Za-z0-9\s.,!]+' 
-            db = shelve.open('announcements.db', 'c')
+            db = shelve.open('database/announcements.db', 'c')
 
             try:
                 announcements_dict = db['Announcements']
@@ -876,7 +881,7 @@ def create_announcement():
 def delete_announcement(id):
     if session['logged_in_admin'] == True:
         announcements_dict = {}
-        db = shelve.open('announcements.db', 'w')
+        db = shelve.open('database/announcements.db', 'w')
         announcements_dict = db['Announcements']
 
         announcements_dict.pop(id)
@@ -912,7 +917,7 @@ def checkout():
             cvv = create_order_form.cvv.data
             
             # check if card name and postal code is valid in database or not
-            db = shelve.open('users.db', 'r')
+            db = shelve.open('database/users.db', 'r')
             users_dict = db['Users']
             
             for key in users_dict:
@@ -921,7 +926,7 @@ def checkout():
             print(set(name_list))
             db.close()
 
-            db = shelve.open('orders.db', 'c')
+            db = shelve.open('database/orders.db', 'c')
             try:
                 orders = db['Orders']
                 orders_dict = orders
@@ -978,7 +983,7 @@ def checkout():
                 print(re.findall(regex, postal_code), re.findall(regex2, card_name), re.findall(regex, card_no), re.findall(regex, expmonth), re.findall(regex, expyear), re.findall(regex, cvv))
                 if re.findall(regex, postal_code) == [] and re.findall(regex2, card_name) == [] and re.findall(regex, card_no) == [] and re.findall(regex, expmonth) == [] and re.findall(regex, expyear) == [] and re.findall(regex, cvv) == []:
                     # append all full names to Fullname list
-                    db = shelve.open('users.db', 'r')
+                    db = shelve.open('database/users.db', 'r')
                     try:
                         users_dict = db['Users']
                     except:
@@ -998,7 +1003,7 @@ def checkout():
                     # check if credit card details match
                     print("Inside Else statement, orders_dict before: " ,orders_dict)                    
 
-                    db = shelve.open('orders.db', 'c')
+                    db = shelve.open('database/orders.db', 'c')
                     print("Inside Else statement. Name inside list.")
                     # encrypt the inputs and store in database
                     cipher_postal_code = encrypt(secret_key, postal_code.encode("utf8"))
@@ -1044,7 +1049,7 @@ def order_confirmation():
     secret_key = get_fixed_key()
     orders_dict = {}
     try:
-        db = shelve.open('orders.db', 'r')
+        db = shelve.open('database/orders.db', 'r')
         orders_dict = db['Orders']
         db.close()
     except:
@@ -1074,7 +1079,7 @@ def retrieve_order():
         orders_dict = {}
         secret_key = get_fixed_key()
         try:
-            db = shelve.open('orders.db', 'r')
+            db = shelve.open('database/orders.db', 'r')
             orders_dict = db['Orders']
             db.close()
 
@@ -1102,7 +1107,7 @@ def retrieve_order():
 @app.route('/deleteOrder/<int:id>', methods=['POST'])
 def delete_order(id):
     orders_dict = {}
-    db = shelve.open('orders.db', 'w')
+    db = shelve.open('database/orders.db', 'w')
     try:
         orders_dict = db['Orders']
     except:
@@ -1124,7 +1129,7 @@ def retrieve_sellcars():
         return render_template('admin-authentication-required.html')
     else:
         sellcars_dict = {}
-        db = shelve.open('sellcar.db', 'r')
+        db = shelve.open('database/sellcar.db', 'r')
         try:
             sellcars_dict = db['Sellcars']
             db.close()
@@ -1149,7 +1154,7 @@ def update_sellcars(id):
         update_sellcars = CreateSellCarForm(request.form)
         if request.method == 'POST' and update_sellcars.validate():
             regex = r'[^A-Za-z0-9\s.,!]+' 
-            db = shelve.open('sellcar.db', 'w')
+            db = shelve.open('database/sellcar.db', 'w')
             sellcars_dict = db['Sellcars']
 
             car_brand = update_sellcars.car_brand.data
@@ -1180,7 +1185,7 @@ def update_sellcars(id):
 
         else:
             sellcars_dict = {}
-            db = shelve.open('sellcar.db', 'r')
+            db = shelve.open('database/sellcar.db', 'r')
             sellcars_dict = db['Sellcars']
             db.close()
 
@@ -1201,7 +1206,7 @@ def delete_sellcar(id):
         return render_template('authentication-required.html')
     else:
         sellcars_dict = {}
-        db = shelve.open('sellcar.db', 'w')
+        db = shelve.open('database/sellcar.db', 'w')
         try:
             sellcars_dict = db['Sellcars']
         except:
@@ -1233,7 +1238,7 @@ def create_car():
 
             if re.findall(regex, carModel) == [] and re.findall(regex, carPrice) == []:
                 # check if car information already exist in database
-                db = shelve.open('createCar.db', 'r') # open database for reading
+                db = shelve.open('database/createCar.db', 'r') # open database for reading
                 create_cars_dict = db['Createcars']
 
                 for key, value in create_cars_dict.items():
@@ -1243,7 +1248,7 @@ def create_car():
                         return render_template('createCar.html', form=create_car_form)
                 db.close()
 
-                db = shelve.open('createCar.db', 'c') # open database for creating car
+                db = shelve.open('database/createCar.db', 'c') # open database for creating car
 
                 try:
                     create_cars_dict = db['Createcars']
@@ -1292,7 +1297,7 @@ def admin_retrieve_cars():
         return render_template('admin-authentication-required.html')
     else:
         create_cars_dict = {}
-        db = shelve.open('createCar.db', 'r')
+        db = shelve.open('database/createCar.db', 'r')
         create_cars_dict = db['Createcars']
         db.close()
 
@@ -1314,7 +1319,7 @@ def update_cars(id):
         update_cars = CreateCarsForm(request.form)
         if request.method == 'POST' and update_cars.validate():
             regex = r'[^A-Za-z0-9\s.,!]+'
-            db = shelve.open('createCar.db', 'w')
+            db = shelve.open('database/createCar.db', 'w')
             create_cars_dict = db['Createcars']
 
             car_brand = update_cars.car_brand.data
@@ -1341,7 +1346,7 @@ def update_cars(id):
 
         else:
             create_cars_dict = {}
-            db = shelve.open('createCar.db', 'r')
+            db = shelve.open('database/createCar.db', 'r')
             create_cars_dict = db['Createcars']
             db.close()
 
@@ -1361,7 +1366,7 @@ def delete_car(id):
         return render_template('admin-authentication-required.html')
     else:
         Create_cars_dict = {}
-        db = shelve.open('Createcar.db', 'w')
+        db = shelve.open('database/Createcar.db', 'w')
         try:
             Create_cars_dict = db['Createcars']
         except:
@@ -1393,7 +1398,7 @@ def sales():
         orders_dict = {}
 
         try:
-            db = shelve.open('orders.db', 'r')
+            db = shelve.open('database/orders.db', 'r')
             orders_dict = db['Orders']
             db.close()
 
@@ -1415,7 +1420,7 @@ def delete_order_admin(id):
         return render_template('admin-authentication-required.html')
     else:
         orders_dict = {}
-        db = shelve.open('orders.db', 'w')
+        db = shelve.open('database/orders.db', 'w')
         try:
             orders_dict = db['Orders']
         except:
