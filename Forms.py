@@ -1,7 +1,6 @@
 from wtforms import Form, StringField, IntegerField, TextAreaField, PasswordField, validators, SelectField
 from wtforms.fields import EmailField
 
-
 class CreateThread(Form):
     thread_username = StringField('Username:', [validators.Length(min=1, max=50), validators.DataRequired()])
     thread_title = StringField('Thread Title:', [validators.Length(min=1, max=150), validators.DataRequired()])
@@ -11,7 +10,7 @@ class CreateThread(Form):
 
 class CreateAnnouncement(Form):
     thread_username = StringField('Username:', [validators.Length(min=1, max=50), validators.DataRequired()])
-    thread_title = StringField('Announcement Title:', [validators.Length(min=1, max=150), validators.DataRequired()])
+    thread_title = StringField('Announcement Title:', [validators.Length(min=1, max=50), validators.DataRequired()])
     thread_message = TextAreaField('Announcement Message:', [validators.DataRequired()])
     thread_reply = TextAreaField('Reply By CarOrSell Staff:')
     announcement_type = StringField('Announcement Type:', [validators.Length(min=1, max=50), validators.DataRequired()])
@@ -19,38 +18,38 @@ class CreateAnnouncement(Form):
 
 
 class CreateUserForm(Form):
-    full_name = StringField('Full Name:', [validators.Length(min=1, max=50), validators.DataRequired()])
+    full_name = StringField('Full Name:', [validators.Length(min=1, max=20), validators.DataRequired()])
     gender = SelectField('Gender', [validators.DataRequired()], choices=[('', 'Select'), ('M', 'Male'), ('F', 'Female')], default='')
     email = EmailField('Email:', [validators.Email(), validators.DataRequired()])
     mobile_no = StringField('Mobile Number (+65):', [validators.Length(min=8, max=8), validators.DataRequired()])
     postal_code = StringField('Postal Code:', [validators.Length(min=6, max=6), validators.DataRequired()])
-    username = StringField('Username:', [validators.Length(min=1, max=50), validators.DataRequired()])
-    password = PasswordField('Password:', [validators.Length(min=1, max=30), validators.DataRequired()])
-    confirm_password = PasswordField('Confirm Password:', [validators.Length(min=1, max=30), validators.DataRequired()])
+    username = StringField('Username:', [validators.Length(min=1, max=20), validators.DataRequired()])
+    password = PasswordField('Password:', [validators.Length(min=8, max=20), validators.DataRequired()])
+    confirm_password = PasswordField('Confirm Password:', [validators.Length(min=8, max=20), validators.DataRequired()])
     member = SelectField('Membership:', [validators.DataRequired()], choices=[('Member', 'Member')])
 
 
 class CreateAdminForm(Form):
-    full_name = StringField('Name:', [validators.Length(min=1, max=50), validators.DataRequired()])
+    full_name = StringField('Name:', [validators.Length(min=1, max=20), validators.DataRequired()])
     gender = SelectField('Gender', [validators.DataRequired()], choices=[('', 'Select'), ('M', 'Male'), ('F', 'Female')], default='')
     email = EmailField('Email:', [validators.Email(), validators.DataRequired()])
     mobile_no = StringField('Mobile Number (+65):', [validators.Length(min=8, max=8), validators.DataRequired()])
     postal_code = StringField('Postal Code:', [validators.Length(min=6, max=6), validators.DataRequired()])
-    username = StringField('Username:', [validators.Length(min=1, max=50), validators.DataRequired()])
-    password = PasswordField('Password:', [validators.Length(min=1, max=30), validators.DataRequired()])
-    confirm_password = PasswordField('Confirm Password:', [validators.Length(min=1, max=30), validators.DataRequired()])
+    username = StringField('Username:', [validators.Length(min=1, max=20), validators.DataRequired()])
+    password = PasswordField('Password:', [validators.Length(min=8, max=20), validators.DataRequired()])
+    confirm_password = PasswordField('Confirm Password:', [validators.Length(min=8, max=20), validators.DataRequired()])
     member = SelectField('Membership:', [validators.DataRequired()], choices=[('', 'Select'), ('Member', 'Member'), ('Admin', 'Admin')], default='')
 
 
 class LoginForm(Form):
-    username = StringField('Username:', [validators.Length(min=1, max=50), validators.DataRequired()])
-    password = PasswordField('Password:', [validators.Length(min=1, max=50), validators.DataRequired()])
+    username = StringField('Username:', [validators.Length(min=1, max=20), validators.DataRequired()])
+    password = PasswordField('Password:', [validators.Length(min=8, max=20), validators.DataRequired()])
 
 class SearchBar(Form):
     search = StringField([validators.Length(max=15)])
 
 class CreateSellCarForm(Form):
-    car_model = StringField('Car Model:', [validators.Length(min=1, max=150), validators.DataRequired()])
+    car_model = StringField('Car Model:', [validators.Length(min=1, max=20), validators.DataRequired()])
     car_brand = SelectField('Car Brand:', [validators.DataRequired()], choices=[('', 'Select'), ('Audi', 'Audi'), ('BMW', 'BMW'), ('Tesla', 'Tesla')], default='')
     car_price = StringField('Your Selling Price (in SGD):', [validators.Length(min=1, max=150), validators.DataRequired()])
     condition = SelectField('Car Condition:', [validators.DataRequired()], choices=[('', 'Select'), ('Good', 'Good'), ('Fair', 'Fair'), ("Used", "Used")], default='')
