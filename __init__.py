@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, render_template_string, request, redirect, url_for, flash, session
 from MyAes import encrypt, decrypt, get_fixed_key
 from User import User
 from Forms import CreateThread, CreateUserForm, CreateAdminForm, CreateSellCarForm, LoginForm, CreateOrderForm, CreateAnnouncement, CreateCarsForm, SearchBar
@@ -94,8 +94,9 @@ def login():
             db_content = db['Users']
             username_list = []
             regex = r'[^A-Za-z0-9]+'         
-            if re.findall(regex, username) != [] and re.findall(regex, password) != []:
+            if (re.findall(regex, username) != [] and re.findall(regex, password) != []) or (re.findall(regex, username) != [] or re.findall(regex, password) != []):
                 print("Special characters found in login input page!")
+                flash("Incorrect username or password!", category='error')
                 flash("No special special characters allowed in input fields!", category='error')
                 return render_template('login.html', form=login_form)
             for key in db_content:
@@ -253,7 +254,10 @@ def create_user():
     create_user_form = CreateUserForm(request.form)  # what is this again?
     if request.method == 'POST' and create_user_form.validate():
         users_dict = {}
-        regex = r'[^A-Za-z0-9]+'         
+        regex = r'[^A-Za-z0-9]+' 
+        regex2 = r'[^A-Za-z0-9\s]+' # for full name
+        regex3 = r'[^0-9]' # for postal code and mobile
+        # regex4 # for email format
         db = shelve.open('database/users.db', 'c')  # check, scan dict for existing
 
         try:
@@ -276,18 +280,26 @@ def create_user():
                 # when the user information is already in database
                 if username == content.get_username() or fullName == content.get_full_name() or mobile == content.get_mobile_no() or email == content.get_email() or postal_code == content.get_postal_code():
                     flash("User information already registered. Please register new information.", category='error')
-                    return redirect(url_for('create_user'))
+                    return render_template('account-creation', form=create_user_form)
                 # when username already taken
                 elif username == content.get_username():
                     flash("Username already taken.", category='error')
-                    return redirect(url_for('create_user'))
+                    return render_template('account-creation', form=create_user_form)
+                # when passwords don't match
+                elif password != confirm_password:
+                    print("passwords don't match!")
+                    flash("Passwords don't match!", category='error')
+                    return render_template('account-creation', form=create_user_form)
+                # when postal_code or mobile number not numbers
+                elif re.findall(regex3, postal_code) != [] or re.findall(regex3, mobile) != []:
+                    print("Mobile or postal code inputs in account-creation page are not numbers!")
+                    flash("Invalid mobile number or postal code!", category='error')
+                    return render_template('account-creation.html', form=create_user_form)                
                 # when the input has special characters
-                else:
-                    if re.findall(regex, username) != [] and re.findall(regex, fullName) != [] and re.findall(regex, mobile) != [] and re.findall(regex, email) != [] and re.findall(regex, postal_code) != [] and re.findall(regex, password) != [] and re.findall(regex, confirm_password)!= []:
-                        flash("No special characters for input fields allowed.", category='error')                    
-                        return redirect(url_for('create_user')) 
+                elif re.findall(regex, username) != [] or re.findall(regex2, fullName) != [] or re.findall(regex, mobile) != [] or re.findall(regex, email) != [] or re.findall(regex, postal_code) != [] or re.findall(regex, password) != [] or re.findall(regex, confirm_password)!= []:
+                    flash("No special characters for input fields allowed.", category='error')                    
+                    return render_template('account-creation', form=create_user_form)
 
-            else:
                 password_digest = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
                 confirm_password_digest = bcrypt.hashpw(confirm_password.encode(), bcrypt.gensalt())
                 password_digest = confirm_password_digest
